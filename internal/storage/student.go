@@ -28,7 +28,8 @@ func (s *Storage) GetGroupStudents(groupId int) ([]models.Student, error) {
 
 	var students []models.Student
 	for rows.Next() {
-		var student models.Student
+		student := models.Student{GroupID: groupId}
+
 		if err := rows.Scan(&student.ID, &student.Name); err != nil {
 			return nil, fmt.Errorf("Error scanning student: %w", err)
 		}
