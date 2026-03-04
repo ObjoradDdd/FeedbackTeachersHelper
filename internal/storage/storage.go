@@ -46,9 +46,17 @@ func (s *Storage) InitTables() error {
 		hash VARCHAR(255) NOT NULL
 	);
 
+	CREATE TABLE IF NOT EXISTS tags (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,	
+		meaning VARCHAR(255) NOT NULL
+		is_bad BOOLEAN NOT NULL,
+		teacher_id INTEGER REFERENCES teachers(id) ON DELETE CASCADE
+	);
+
 	CREATE TABLE IF NOT EXISTS groups (
 		id SERIAL PRIMARY KEY,
-		teacher_id INTEGER REFERENCES teachers(id) ON DELETE SET NULL,
+		teacher_id INTEGER REFERENCES teachers(id) ON DELETE CASCADE,
 		name VARCHAR(255) NOT NULL
 	);
 
@@ -56,13 +64,6 @@ func (s *Storage) InitTables() error {
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(255) NOT NULL,
 		group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE
-	);
-	
-
-	CREATE TABLE IF NOT EXISTS tags (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		is_bad BOOLEAN NOT NULL DEFAULT false
 	);
 	`
 
