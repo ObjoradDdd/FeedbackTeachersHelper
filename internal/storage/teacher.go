@@ -32,3 +32,9 @@ func (s *Storage) GetTeacherByLogin(login string) (*models.Teacher, error) {
 	}
 	return &teacher, nil
 }
+
+func (s *Storage) DeleteTeacherById(id int) error {
+	query := `DELETE FROM teachers WHERE id = $1`
+	_, err := s.db.Exec(query, id)
+	return err
+}

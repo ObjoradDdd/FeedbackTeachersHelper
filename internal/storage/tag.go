@@ -6,7 +6,7 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-func (s *Storage) AddTag(tag *models.Tag) (int, error) {
+func (s *Storage) CreateTag(tag *models.Tag) (int, error) {
 	query := `INSERT INTO tags (name, meaning, is_bad, teacher_id) VALUES ($1, $2, $3, $4) RETURNING id`
 	var tagID int
 
