@@ -22,13 +22,13 @@ func New(connString string) (*Storage, error) {
 		return nil, fmt.Errorf("DB ping error: %w", err)
 	}
 
-	slog.Info("DB succes", "driver", "postgres")
+	slog.Info("DB connection successful", "driver", "postgres")
 
 	return &Storage{db: db}, nil
 }
 
 func (s *Storage) Close() error {
-	slog.Info("DB close")
+	slog.Info("Closing DB connection")
 	return s.db.Close()
 }
 
@@ -42,14 +42,15 @@ func (s *Storage) InitTables() error {
 
 	CREATE TABLE IF NOT EXISTS teachers (
 		id SERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,	
+		api_key VARCHAR(255),
+		login VARCHAR(255) NOT NULL UNIQUE,	
 		hash VARCHAR(255) NOT NULL
 	);
 
 	CREATE TABLE IF NOT EXISTS tags (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(255) NOT NULL,	
-		meaning VARCHAR(255) NOT NULL
+		meaning VARCHAR(255) NOT NULL,
 		is_bad BOOLEAN NOT NULL,
 		teacher_id INTEGER REFERENCES teachers(id) ON DELETE CASCADE
 	);

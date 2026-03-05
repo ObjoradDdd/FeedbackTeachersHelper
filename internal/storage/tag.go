@@ -7,10 +7,10 @@ import (
 )
 
 func (s *Storage) CreateTag(tag *models.Tag) (int, error) {
-	query := `INSERT INTO tags (name, meaning, is_bad, teacher_id) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO tags (name, meaning, teacher_id) VALUES ($1, $2, $3) RETURNING id`
 	var tagID int
 
-	if err := s.db.QueryRow(query, tag.Name, tag.Meaning, tag.IsBad, tag.TeacherID).Scan(&tagID); err != nil {
+	if err := s.db.QueryRow(query, tag.Name, tag.Meaning, tag.TeacherID).Scan(&tagID); err != nil {
 		return 0, fmt.Errorf("Error adding tag %s: %w", tag.Name, err)
 	}
 
@@ -18,7 +18,7 @@ func (s *Storage) CreateTag(tag *models.Tag) (int, error) {
 }
 
 func (s *Storage) GetTeachersTags(teacherId int) ([]models.Tag, error) {
-	query := `SELECT id, name, meaning, is_bad FROM tags WHERE teacher_id = $1`
+	query := `SELECT id, name, meaning FROM tags WHERE teacher_id = $1`
 
 	rows, err := s.db.Query(query, teacherId)
 	if err != nil {
@@ -29,7 +29,7 @@ func (s *Storage) GetTeachersTags(teacherId int) ([]models.Tag, error) {
 	var tags []models.Tag
 	for rows.Next() {
 		var tag models.Tag
-		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Meaning, &tag.IsBad); err != nil {
+		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Meaning); err != nil {
 			return nil, fmt.Errorf("Error scanning tag: %w", err)
 		}
 		tags = append(tags, tag)
@@ -38,21 +38,31 @@ func (s *Storage) GetTeachersTags(teacherId int) ([]models.Tag, error) {
 	return tags, nil
 }
 
-func (s *Storage) DeleteTag(id int) error {
-	query := `DELETE FROM tags WHERE id = $1`
+func (s *Storage) DeleteTag(id int, teacherID int) error {
+	query := `DELETE FROM tags WHERE id = $1 AND teacher_id = $2`
 
-	if _, err := s.db.Exec(query, id); err != nil {
+	if _, err := s.db.Exec(query, id, teacherID); err != nil {
 		return fmt.Errorf("Error deleting tag: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) UpdateTag(tag *models.Tag) error {
-	query := `UPDATE tags SET name = $1, meaning = $2, is_bad = $3 WHERE id = $4`
+func (s *Storage) UpdateTag(tag *models.Tag, teacherID int) error {
+	query := `UPDATE tags SET name = $1, meaning = $2 WHERE id = $3 AND teacher_id = $4`
 
-	if _, err := s.db.Exec(query, tag.Name, tag.Meaning, tag.IsBad, tag.ID); err != nil {
+	result, err := s.db.Exec(query, tag.Name, tag.Meaning, tag.ID, teacherID)
+
+	if err != nil {
 		return fmt.Errorf("Error updating tag: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("Error checking update result: %w", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("No tag updated, check if tag exists and belongs to teacher ID %d", teacherID)
 	}
 
 	return nil
