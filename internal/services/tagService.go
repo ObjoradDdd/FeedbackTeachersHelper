@@ -32,7 +32,6 @@ func (s *TagService) CreateTag(input CreateTagInput) (int, error) {
 	tag := &models.Tag{
 		Name:      input.Name,
 		Meaning:   input.Meaning,
-		IsBad:     input.IsBad,
 		TeacherID: input.TeacherID,
 	}
 
@@ -51,4 +50,18 @@ func (s *TagService) GetTeachersTags(teacherId int) ([]models.Tag, error) {
 	}
 
 	return tags, nil
+}
+
+func (s *TagService) DeleteTag(id int) error {
+	if err := s.db.DeleteTag(id); err != nil {
+		return fmt.Errorf("error in DB while deleting tag: %w", err)
+	}
+	return nil
+}
+
+func (s *TagService) UpdateTag(tag *models.Tag) error {
+	if err := s.db.UpdateTag(tag); err != nil {
+		return fmt.Errorf("error in DB while updating tag: %w", err)
+	}
+	return nil
 }
