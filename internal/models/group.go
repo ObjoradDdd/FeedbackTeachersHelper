@@ -4,12 +4,12 @@ import "github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 
 type Group struct {
 	Name string
-	ID   int
+	Id   int
 }
 
 func (g *Group) ToDto() *dto.GroupDto {
 	return &dto.GroupDto{
-		ID:   g.ID,
+		Id:   g.Id,
 		Name: g.Name,
 	}
 }

@@ -7,10 +7,10 @@ import (
 )
 
 type TagStorage interface {
-	CreateTag(tag *models.Tag) (int, error)
-	DeleteTag(id int) error
+	CreateTag(tag *models.Tag, teacherId int) (int, error)
+	DeleteTag(id int, teacherId int) error
 	GetTeachersTags(teacherId int) ([]models.Tag, error)
-	UpdateTag(tag *models.Tag) error
+	UpdateTag(tag *models.Tag, teacherId int) error
 }
 
 type TagService struct {
@@ -22,25 +22,22 @@ func NewTagService(db TagStorage) *TagService {
 }
 
 type CreateTagInput struct {
-	Name      string
-	Meaning   string
-	IsBad     bool
-	TeacherID int
+	Name    string
+	Meaning string
 }
 
-func (s *TagService) CreateTag(input CreateTagInput) (int, error) {
+func (s *TagService) CreateTag(input CreateTagInput, teacherId int) (int, error) {
 	tag := &models.Tag{
-		Name:      input.Name,
-		Meaning:   input.Meaning,
-		TeacherID: input.TeacherID,
+		Name:    input.Name,
+		Meaning: input.Meaning,
 	}
 
-	tagID, err := s.db.CreateTag(tag)
+	tagId, err := s.db.CreateTag(tag, teacherId)
 	if err != nil {
 		return 0, fmt.Errorf("error in DB while registering: %w", err)
 	}
 
-	return tagID, nil
+	return tagId, nil
 }
 
 func (s *TagService) GetTeachersTags(teacherId int) ([]models.Tag, error) {
@@ -52,15 +49,15 @@ func (s *TagService) GetTeachersTags(teacherId int) ([]models.Tag, error) {
 	return tags, nil
 }
 
-func (s *TagService) DeleteTag(id int) error {
-	if err := s.db.DeleteTag(id); err != nil {
+func (s *TagService) DeleteTag(id int, teacherId int) error {
+	if err := s.db.DeleteTag(id, teacherId); err != nil {
 		return fmt.Errorf("error in DB while deleting tag: %w", err)
 	}
 	return nil
 }
 
-func (s *TagService) UpdateTag(tag *models.Tag) error {
-	if err := s.db.UpdateTag(tag); err != nil {
+func (s *TagService) UpdateTag(tag *models.Tag, teacherId int) error {
+	if err := s.db.UpdateTag(tag, teacherId); err != nil {
 		return fmt.Errorf("error in DB while updating tag: %w", err)
 	}
 	return nil

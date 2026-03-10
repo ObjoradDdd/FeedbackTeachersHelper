@@ -6,7 +6,7 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	TeacherID int    `json:"teacher_id"`
+	TeacherId int    `json:"teacher_id"`
 	Message   string `json:"message"`
 }
 

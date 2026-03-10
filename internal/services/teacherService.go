@@ -44,12 +44,12 @@ func (s *TeacherService) Register(login, password string) (int, error) {
 		Login: login,
 	}
 
-	teacherID, err := s.db.CreateTeacher(teacher, string(hash))
+	teacherId, err := s.db.CreateTeacher(teacher, string(hash))
 	if err != nil {
 		return 0, fmt.Errorf("error in DB while registering: %w", err)
 	}
 
-	return teacherID, nil
+	return teacherId, nil
 }
 
 func (s *TeacherService) Login(login, password string) (string, error) {
@@ -62,7 +62,7 @@ func (s *TeacherService) Login(login, password string) (string, error) {
 		return "", fmt.Errorf("error in DB while fetching teacher: %w", err)
 	}
 
-	hash, err := s.db.GetTeacherHash(teacher.ID)
+	hash, err := s.db.GetTeacherHash(teacher.Id)
 	if err != nil {
 		return "", fmt.Errorf("error in DB while fetching teacher hash: %w", err)
 	}
@@ -71,7 +71,7 @@ func (s *TeacherService) Login(login, password string) (string, error) {
 		return "", errors.New("invalid login or password")
 	}
 
-	token, err := utils.GenerateToken(teacher.ID)
+	token, err := utils.GenerateToken(teacher.Id)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate token: %w", err)
 	}

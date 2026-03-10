@@ -16,9 +16,9 @@ func getJWTSecret() []byte {
 	return []byte(secret)
 }
 
-func GenerateToken(teacherID int) (string, error) {
+func GenerateToken(teacherId int) (string, error) {
 	claims := jwt.MapClaims{
-		"teacher_id": teacherID,
+		"teacher_id": teacherId,
 		"exp":        time.Now().Add(time.Hour * 72).Unix(),
 	}
 
@@ -40,11 +40,11 @@ func ParseToken(tokenString string) (int, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		teacherIDFloat, ok := claims["teacher_id"].(float64)
+		teacherIdFloat, ok := claims["teacher_id"].(float64)
 		if !ok {
 			return 0, errors.New("Invalid teacher_id format in token")
 		}
-		return int(teacherIDFloat), nil
+		return int(teacherIdFloat), nil
 	}
 
 	return 0, errors.New("Invalid token")

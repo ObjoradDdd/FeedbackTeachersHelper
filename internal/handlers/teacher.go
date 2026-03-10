@@ -22,13 +22,11 @@ func (h *TeacherHandler) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var req dto.RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "invalid request body"})
+	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
-	teacherID, err := h.teacherService.Register(req.Login, req.Password)
+	teacherId, err := h.teacherService.Register(req.Login, req.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -37,7 +35,7 @@ func (h *TeacherHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(dto.RegisterResponse{
-		TeacherID: teacherID,
+		TeacherId: teacherId,
 		Message:   "Teacher registered successfully",
 	})
 }
@@ -46,9 +44,7 @@ func (h *TeacherHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var req dto.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "invalid request body"})
+	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
@@ -67,21 +63,17 @@ func (h *TeacherHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *TeacherHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherID, ok := r.Context().Value(TeacherIDKey).(int)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "internal server error: failed to get teacher id from context"})
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
 		return
 	}
 
 	var req dto.AddAPIKeyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "invalid json format"})
+	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
-	err := h.teacherService.AddApiKey(teacherID, req.APIKey)
+	err = h.teacherService.AddApiKey(teacherId, req.APIKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -97,14 +89,12 @@ func (h *TeacherHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 func (h *TeacherHandler) DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherID, ok := r.Context().Value(TeacherIDKey).(int)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "internal server error: failed to get teacher id from context"})
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
 		return
 	}
 
-	err := h.teacherService.DeleteTeacher(teacherID)
+	err = h.teacherService.DeleteTeacher(teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})

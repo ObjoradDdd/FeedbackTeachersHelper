@@ -12,7 +12,7 @@ import (
 
 type contextKey string
 
-const TeacherIDKey contextKey = "teacherID"
+const TeacherIdKey contextKey = "teacherId"
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -32,14 +32,14 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		tokenString := headerParts[1]
 
-		teacherID, err := utils.ParseToken(tokenString)
+		teacherId, err := utils.ParseToken(tokenString)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), TeacherIDKey, teacherID)
+		ctx := context.WithValue(r.Context(), TeacherIdKey, teacherId)
 
 		reqWithContext := r.WithContext(ctx)
 

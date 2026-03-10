@@ -8,7 +8,7 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-func (s *Storage) CreateStudent(student *models.Student, teacherID int) (int, error) {
+func (s *Storage) CreateStudent(student *models.Student, teacherId int, groupId int) (int, error) {
 	query := `
 		INSERT INTO students (name, group_id) 
 		SELECT $1, $2 
@@ -17,9 +17,9 @@ func (s *Storage) CreateStudent(student *models.Student, teacherID int) (int, er
 		)
 		RETURNING id
 	`
-	var studentID int
+	var studentId int
 
-	err := s.db.QueryRow(query, student.Name, student.GroupID, teacherID).Scan(&studentID)
+	err := s.db.QueryRow(query, student.Name, groupId, teacherId).Scan(&studentId)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -28,13 +28,13 @@ func (s *Storage) CreateStudent(student *models.Student, teacherID int) (int, er
 		return 0, fmt.Errorf("failed to insert student %s: %w", student.Name, err)
 	}
 
-	return studentID, nil
+	return studentId, nil
 }
 
-func (s *Storage) GetGroupStudents(groupId int, teacherID int) ([]models.Student, error) {
+func (s *Storage) GetGroupStudents(groupId int, teacherId int) ([]models.Student, error) {
 	query := `SELECT id, name FROM students WHERE group_id = $1 AND group_id IN (SELECT id FROM groups WHERE teacher_id = $2)`
 
-	rows, err := s.db.Query(query, groupId, teacherID)
+	rows, err := s.db.Query(query, groupId, teacherId)
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching students: %w", err)
 	}
@@ -42,9 +42,9 @@ func (s *Storage) GetGroupStudents(groupId int, teacherID int) ([]models.Student
 
 	var students []models.Student
 	for rows.Next() {
-		student := models.Student{GroupID: groupId}
+		student := models.Student{}
 
-		if err := rows.Scan(&student.ID, &student.Name); err != nil {
+		if err := rows.Scan(&student.Id, &student.Name); err != nil {
 			return nil, fmt.Errorf("Error scanning student: %w", err)
 		}
 		students = append(students, student)
@@ -53,17 +53,17 @@ func (s *Storage) GetGroupStudents(groupId int, teacherID int) ([]models.Student
 	return students, nil
 }
 
-func (s *Storage) DeleteStudent(id int, teacherID int) error {
+func (s *Storage) DeleteStudent(id int, teacherId int) error {
 	query := `DELETE FROM students WHERE id = $1 AND group_id IN (SELECT id FROM groups WHERE teacher_id = $2)`
 
-	if _, err := s.db.Exec(query, id, teacherID); err != nil {
+	if _, err := s.db.Exec(query, id, teacherId); err != nil {
 		return fmt.Errorf("Error deleting student: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) UpdateStudent(student *models.Student, teacherID int) error {
+func (s *Storage) UpdateStudent(student *models.Student, teacherId int, groupId int) error {
 	query := `
 		UPDATE students 
 		SET name = $1, group_id = $2 
@@ -72,7 +72,7 @@ func (s *Storage) UpdateStudent(student *models.Student, teacherID int) error {
 		AND EXISTS (SELECT 1 FROM groups WHERE id = $2 AND teacher_id = $4)
 	`
 
-	result, err := s.db.Exec(query, student.Name, student.GroupID, student.ID, teacherID)
+	result, err := s.db.Exec(query, student.Name, groupId, student.Id, teacherId)
 	if err != nil {
 		return fmt.Errorf("Error updating student: %w", err)
 	}

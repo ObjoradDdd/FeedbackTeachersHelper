@@ -1,14 +1,14 @@
 package models
 
 type GeneratedStudentFeedback struct {
-	StudentID int
+	StudentId int
 	Name      string
 	Feedback  string
 }
 
 type GeneratedGroupFeedback struct {
-	TeacherID         int
-	GroupID           int
+	TeacherId         int
+	GroupId           int
 	LessonDescription string
 	Students          []GeneratedStudentFeedback
 }

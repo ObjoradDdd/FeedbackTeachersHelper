@@ -9,8 +9,8 @@ import (
 type GroupStorage interface {
 	CreateGroup(group *models.Group, teacherId int) (int, error)
 	GetTeachersGroups(teacherId int) ([]models.Group, error)
-	UpdateGroup(group *models.Group, teacherID int) error
-	DeleteGroup(id int, teacherID int) error
+	UpdateGroup(group *models.Group, teacherId int) error
+	DeleteGroup(id int, teacherId int) error
 }
 
 type GroupService struct {
@@ -26,11 +26,11 @@ func (s *GroupService) CreateGroup(name string, teacherId int) (int, error) {
 		Name: name,
 	}
 
-	groupID, err := s.db.CreateGroup(group, teacherId)
+	groupId, err := s.db.CreateGroup(group, teacherId)
 	if err != nil {
 		return 0, fmt.Errorf("error in DB while creating group: %w", err)
 	}
-	return groupID, nil
+	return groupId, nil
 }
 
 func (s *GroupService) GetTeachersGroups(teacherId int) ([]models.Group, error) {
@@ -41,13 +41,13 @@ func (s *GroupService) GetTeachersGroups(teacherId int) ([]models.Group, error) 
 	return groups, nil
 }
 
-func (s *GroupService) UpdateGroup(id int, name string, teacherID int) error {
+func (s *GroupService) UpdateGroup(id int, name string, teacherId int) error {
 	group := &models.Group{
-		ID:   id,
+		Id:   id,
 		Name: name,
 	}
 
-	if err := s.db.UpdateGroup(group, teacherID); err != nil {
+	if err := s.db.UpdateGroup(group, teacherId); err != nil {
 		return fmt.Errorf("error in DB while updating group: %w", err)
 	}
 	return nil

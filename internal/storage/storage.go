@@ -51,7 +51,6 @@ func (s *Storage) InitTables() error {
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(255) NOT NULL,	
 		meaning VARCHAR(255) NOT NULL,
-		is_bad BOOLEAN NOT NULL,
 		teacher_id INTEGER REFERENCES teachers(id) ON DELETE CASCADE
 	);
 

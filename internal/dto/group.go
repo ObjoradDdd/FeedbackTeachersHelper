@@ -1,7 +1,7 @@
 package dto
 
 type GroupDto struct {
-	ID       int          `json:"id"`
+	Id       int          `json:"id"`
 	Name     string       `json:"name"`
 	Students []StudentDto `json:"students,omitempty"`
 }
@@ -15,11 +15,11 @@ type CreateGroupRequest struct {
 }
 
 type CreateGroupResponse struct {
-	ID int `json:"id"`
+	Id int `json:"id"`
 }
 
 type UpdateGroupRequest struct {
-	ID   int    `json:"id"`
+	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -28,7 +28,7 @@ type UpdateGroupResponse struct {
 }
 
 type DeleteGroupRequest struct {
-	ID int `json:"id"`
+	Id int `json:"id"`
 }
 
 type DeleteGroupResponse struct {

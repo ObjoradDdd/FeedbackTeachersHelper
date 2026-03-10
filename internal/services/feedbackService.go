@@ -28,29 +28,29 @@ func NewFeedbackService(storage FeedbackStorage, llm LlmClient) *FeedbackService
 }
 
 type StudentFeedbackInput struct {
-	StudentID int
+	StudentId int
 	Comment   string
-	TagIDs    []int
+	TagIds    []int
 }
 
 type GenerateFeedbackInput struct {
-	TeacherID         int
-	GroupID           int
+	TeacherId         int
+	GroupId           int
 	LessonDescription string
 	Activities        string
 	Students          []StudentFeedbackInput
 }
 
 type StudentFeedback struct {
-	StudentID int
+	StudentId int
 	Name      string
 	Comment   string
 	Tags      []models.Tag
 }
 
 type GroupFeedback struct {
-	TeacherID         int
-	GroupID           int
+	TeacherId         int
+	GroupId           int
 	LessonDescription string
 	Activities        string
 	Students          []StudentFeedback
@@ -69,7 +69,7 @@ func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, teacherId
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
 	}
 
-	groupStudents, err := s.storage.GetGroupStudents(req.GroupID, teacherId)
+	groupStudents, err := s.storage.GetGroupStudents(req.GroupId, teacherId)
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching students: %w", err)
 	}
@@ -81,37 +81,37 @@ func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, teacherId
 
 	studentMap := make(map[int]string)
 	for _, student := range groupStudents {
-		studentMap[student.ID] = student.Name
+		studentMap[student.Id] = student.Name
 	}
 
 	tagMap := make(map[int]models.Tag)
 	for _, tag := range teacherTags {
-		tagMap[tag.ID] = tag
+		tagMap[tag.Id] = tag
 	}
 
 	internalInput := &GroupFeedback{
-		TeacherID:         teacherId,
-		GroupID:           req.GroupID,
+		TeacherId:         teacherId,
+		GroupId:           req.GroupId,
 		LessonDescription: req.LessonDescription,
 		Activities:        req.Activities,
 		Students:          make([]StudentFeedback, 0, len(req.Students)),
 	}
 
 	for _, studentReq := range req.Students {
-		studentName, exists := studentMap[studentReq.StudentID]
+		studentName, exists := studentMap[studentReq.StudentId]
 		if !exists {
-			return models.GeneratedGroupFeedback{}, fmt.Errorf("student with ID %d not found in group %d", studentReq.StudentID, req.GroupID)
+			return models.GeneratedGroupFeedback{}, fmt.Errorf("student with Id %d not found in group %d", studentReq.StudentId, req.GroupId)
 		}
 
 		var studentTags []models.Tag
-		for _, tagID := range studentReq.TagIDs {
-			if tag, tagExists := tagMap[tagID]; tagExists {
+		for _, tagId := range studentReq.TagIds {
+			if tag, tagExists := tagMap[tagId]; tagExists {
 				studentTags = append(studentTags, tag)
 			}
 		}
 
 		internalInput.Students = append(internalInput.Students, StudentFeedback{
-			StudentID: studentReq.StudentID,
+			StudentId: studentReq.StudentId,
 			Name:      studentName,
 			Comment:   studentReq.Comment,
 			Tags:      studentTags,
@@ -179,8 +179,8 @@ func mapOutput(llmOutput string, input *GroupFeedback) (*models.GeneratedGroupFe
 	lessonDesc := strings.TrimSpace(parts[1])
 
 	result := &models.GeneratedGroupFeedback{
-		TeacherID:         input.TeacherID,
-		GroupID:           input.GroupID,
+		TeacherId:         input.TeacherId,
+		GroupId:           input.GroupId,
 		LessonDescription: lessonDesc,
 		Students:          make([]models.GeneratedStudentFeedback, 0, len(input.Students)),
 	}
@@ -204,17 +204,17 @@ func mapOutput(llmOutput string, input *GroupFeedback) (*models.GeneratedGroupFe
 		name = strings.ReplaceAll(name, "*", "")
 		name = strings.ReplaceAll(name, "#", "")
 
-		var studentID int
+		var studentId int
 		for _, s := range input.Students {
 			if strings.EqualFold(strings.TrimSpace(s.Name), name) {
-				studentID = s.StudentID
+				studentId = s.StudentId
 				break
 			}
 		}
 
-		if studentID != 0 {
+		if studentId != 0 {
 			result.Students = append(result.Students, models.GeneratedStudentFeedback{
-				StudentID: studentID,
+				StudentId: studentId,
 				Name:      name,
 				Feedback:  feedbackText,
 			})

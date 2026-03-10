@@ -21,21 +21,17 @@ func NewGroupHandler(groupService *services.GroupService) *GroupHandler {
 func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherID, ok := r.Context().Value(TeacherIDKey).(int)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "internal server error: failed to get teacher id from context"})
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
 		return
 	}
 
 	var req dto.CreateGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "invalid json format"})
+	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
-	groupID, err := h.groupService.CreateGroup(req.Name, teacherID)
+	groupId, err := h.groupService.CreateGroup(req.Name, teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -44,21 +40,19 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.CreateGroupResponse{
-		ID: groupID,
+		Id: groupId,
 	})
 }
 
 func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherID, ok := r.Context().Value(TeacherIDKey).(int)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "internal server error: failed to get teacher id from context"})
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
 		return
 	}
 
-	groups, err := h.groupService.GetTeachersGroups(teacherID)
+	groups, err := h.groupService.GetTeachersGroups(teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -80,21 +74,17 @@ func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherID, ok := r.Context().Value(TeacherIDKey).(int)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "internal server error: failed to get teacher id from context"})
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
 		return
 	}
 
 	var req dto.UpdateGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "invalid json format"})
+	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
-	err := h.groupService.UpdateGroup(req.ID, req.Name, teacherID)
+	err = h.groupService.UpdateGroup(req.Id, req.Name, teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -110,21 +100,17 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherID, ok := r.Context().Value(TeacherIDKey).(int)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "internal server error: failed to get teacher id from context"})
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
 		return
 	}
 
 	var req dto.DeleteGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "invalid json format"})
+	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
-	err := h.groupService.DeleteGroup(req.ID, teacherID)
+	err = h.groupService.DeleteGroup(req.Id, teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})

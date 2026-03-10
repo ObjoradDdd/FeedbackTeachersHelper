@@ -4,13 +4,13 @@ import "github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 
 func (s *Storage) CreateTeacher(teacher *models.Teacher, hash string) (int, error) {
 	query := `INSERT INTO teachers (login, hash) VALUES ($1, $2) RETURNING id`
-	var teacherID int
+	var teacherId int
 
-	if err := s.db.QueryRow(query, teacher.Login, hash).Scan(&teacherID); err != nil {
+	if err := s.db.QueryRow(query, teacher.Login, hash).Scan(&teacherId); err != nil {
 		return 0, err
 	}
 
-	return teacherID, nil
+	return teacherId, nil
 }
 
 func (s *Storage) GetTeacherHash(teacherId int) (string, error) {
@@ -27,7 +27,7 @@ func (s *Storage) GetTeacherByLogin(login string) (*models.Teacher, error) {
 	query := `SELECT id, login FROM teachers WHERE login = $1`
 	var teacher models.Teacher
 
-	if err := s.db.QueryRow(query, login).Scan(&teacher.ID, &teacher.Login); err != nil {
+	if err := s.db.QueryRow(query, login).Scan(&teacher.Id, &teacher.Login); err != nil {
 		return nil, err
 	}
 	return &teacher, nil
