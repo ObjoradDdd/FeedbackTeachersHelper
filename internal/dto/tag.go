@@ -1,20 +1,38 @@
 package dto
 
 type TagDto struct {
-	Name    string
-	Meaning string
-	Id      int
+	Name    string `json:"name"`
+	Meaning string `json:"meaning"`
+	Id      int    `json:"id"`
 }
 
 type GetTeacherTagsRequest struct {
-	Tags []TagDto
+	Tags []TagDto `json:"tags"`
 }
 
 type CreateTagRequest struct {
-	Name    string
-	Meaning string
+	Name    string `json:"name"`
+	Meaning string `json:"meaning"`
 }
 
 type CreateTagResponse struct {
-	Id int
+	Id int `json:"id"`
+}
+
+type DeleteTagRequest struct {
+	Id int `json:"id"`
+}
+
+type DeleteTagResponse struct {
+	Id int `json:"id"`
+}
+
+type UpdateTagRequest struct {
+	Name    string `json:"name"`
+	Meaning string `json:"meaninig"`
+	Id      int    `json:"id"`
+}
+
+type UpdateTagResponse struct {
+	Id int `json:"id"`
 }

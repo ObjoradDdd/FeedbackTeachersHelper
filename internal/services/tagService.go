@@ -26,6 +26,12 @@ type CreateTagInput struct {
 	Meaning string
 }
 
+type UpdateTagInput struct {
+	Id      int
+	Name    string
+	Meaning string
+}
+
 func (s *TagService) CreateTag(input CreateTagInput, teacherId int) (int, error) {
 	tag := &models.Tag{
 		Name:    input.Name,
@@ -56,7 +62,13 @@ func (s *TagService) DeleteTag(id int, teacherId int) error {
 	return nil
 }
 
-func (s *TagService) UpdateTag(tag *models.Tag, teacherId int) error {
+func (s *TagService) UpdateTag(input UpdateTagInput, teacherId int) error {
+	tag := &models.Tag{
+		Id:      input.Id,
+		Name:    input.Name,
+		Meaning: input.Meaning,
+	}
+
 	if err := s.db.UpdateTag(tag, teacherId); err != nil {
 		return fmt.Errorf("error in DB while updating tag: %w", err)
 	}

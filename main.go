@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/clients/llm"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/handlers"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/storage"
@@ -25,19 +26,23 @@ func main() {
 		log.Fatal("❌ Ошибка БД:", err)
 	}
 
-	dbStorage.InitTables()
+	// dbStorage.InitTables()
 
 	defer dbStorage.Close()
+
+	geminiClient := llm.NewGeminiClient()
 
 	teacherService := services.NewTeacherService(dbStorage)
 	groupService := services.NewGroupService(dbStorage)
 	studentService := services.NewStudentService(dbStorage)
 	tagService := services.NewTagService(dbStorage)
+	feedbackService := services.NewFeedbackService(dbStorage, geminiClient)
 
 	teacherHandler := handlers.NewTeacherHandler(teacherService)
 	groupHandler := handlers.NewGroupHandler(groupService)
 	studentHandler := handlers.NewStudentHandler(studentService)
 	tagHandler := handlers.NewTagHandler(tagService)
+	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 
 	mux := http.NewServeMux()
 
@@ -58,6 +63,10 @@ func main() {
 
 	mux.HandleFunc("GET /api/tag", handlers.AuthMiddleware(tagHandler.GetTeacherTags))
 	mux.HandleFunc("POST /api/tag", handlers.AuthMiddleware(tagHandler.CreateTag))
+	mux.HandleFunc("PUT /api/tag", handlers.AuthMiddleware(tagHandler.UpdateTag))
+	mux.HandleFunc("DELETE /api/tag", handlers.AuthMiddleware(tagHandler.DeleteTag))
+
+	mux.HandleFunc("GET /api/feedback", handlers.AuthMiddleware(feedbackHandler.GetFeedback))
 
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(time.Now().String()))

@@ -10,12 +10,12 @@ import (
 )
 
 type TagHandler struct {
-	TagService *services.TagService
+	tagService *services.TagService
 }
 
 func NewTagHandler(tagService *services.TagService) *TagHandler {
 	return &TagHandler{
-		TagService: tagService,
+		tagService: tagService,
 	}
 }
 
@@ -27,7 +27,7 @@ func (h *TagHandler) GetTeacherTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tags, err := h.TagService.GetTeachersTags(teacherId)
+	tags, err := h.tagService.GetTeachersTags(teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -59,7 +59,7 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tagId, err := h.TagService.CreateTag(services.CreateTagInput{
+	tagId, err := h.tagService.CreateTag(services.CreateTagInput{
 		Name:    req.Name,
 		Meaning: req.Meaning,
 	}, teacherId)
@@ -74,5 +74,61 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.CreateTagResponse{
 		Id: tagId,
 	})
+}
 
+func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
+		return
+	}
+
+	var req dto.DeleteTagRequest
+	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	err = h.tagService.DeleteTag(req.Id, teacherId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.DeleteTagResponse{
+		Id: req.Id,
+	})
+}
+
+func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	teacherId, err := GetTeacherIdFromToken(w, r)
+	if err != nil {
+		return
+	}
+
+	var req dto.UpdateTagRequest
+	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	err = h.tagService.UpdateTag(services.UpdateTagInput{
+		Id:      req.Id,
+		Name:    req.Name,
+		Meaning: req.Meaning,
+	}, teacherId)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.UpdateTagResponse{
+		Id: req.Id,
+	})
 }
