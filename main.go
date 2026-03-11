@@ -128,8 +128,8 @@ func main() {
 		slog.Info("User visited the site")
 	})
 
-	fmt.Println("🌐 Сервер запущен на https://localhost:443")
-	if err := http.ListenAndServeTLS(":443", "cert.pem", "key.pem", handlers.EnableCORS(mux)); err != nil {
+	fmt.Println("🌐 Сервер запущен на https://localhost:8443")
+	if err := http.ListenAndServeTLS(":8443", "cert.pem", "key.pem", handlers.EnableCORS(mux)); err != nil {
 		log.Fatal("❌ Ошибка запуска сервера:", err)
 	}
 }
