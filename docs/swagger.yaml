@@ -1,0 +1,805 @@
+basePath: /api
+definitions:
+  dto.AddAPIKeyRequest:
+    properties:
+      api_key:
+        type: string
+    type: object
+  dto.AddApiKeyResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dto.CreateGroupRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  dto.CreateGroupResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  dto.CreateStudentRequest:
+    properties:
+      group_id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.CreateStudentResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  dto.CreateTagRequest:
+    properties:
+      meaning:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.CreateTagResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  dto.DeleteGroupResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dto.DeleteStudentResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dto.DeleteTagResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  dto.DeleteTeacherResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dto.GetFeedbackRequest:
+    properties:
+      activities:
+        type: string
+      group_id:
+        type: integer
+      lesson_description:
+        type: string
+      students:
+        items:
+          $ref: '#/definitions/dto.StudentFeedbackRequest'
+        type: array
+    type: object
+  dto.GetFeedbackResponse:
+    properties:
+      group_id:
+        type: integer
+      lesson_description:
+        type: string
+      students:
+        items:
+          $ref: '#/definitions/dto.StudentFeedbackResponse'
+        type: array
+      teacher_id:
+        type: integer
+    type: object
+  dto.GetGroupsResponse:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/dto.GroupDto'
+        type: array
+    type: object
+  dto.GetStudentsGroupResponse:
+    properties:
+      students:
+        items:
+          $ref: '#/definitions/dto.StudentDto'
+        type: array
+    type: object
+  dto.GetTeacherTagsRequest:
+    properties:
+      tags:
+        items:
+          $ref: '#/definitions/dto.TagDto'
+        type: array
+    type: object
+  dto.GroupDto:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      students:
+        items:
+          $ref: '#/definitions/dto.StudentDto'
+        type: array
+    type: object
+  dto.LoginRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  dto.RegisterRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.RegisterResponse:
+    properties:
+      message:
+        type: string
+      teacher_id:
+        type: integer
+    type: object
+  dto.StudentDto:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.StudentFeedbackRequest:
+    properties:
+      comment:
+        type: string
+      student_id:
+        type: integer
+      tag_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  dto.StudentFeedbackResponse:
+    properties:
+      feedback:
+        type: string
+      name:
+        type: string
+      student_id:
+        type: integer
+    type: object
+  dto.TagDto:
+    properties:
+      id:
+        type: integer
+      meaning:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.UpdateGroupRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  dto.UpdateGroupResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dto.UpdateStudentRequest:
+    properties:
+      group_id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.UpdateStudentResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dto.UpdateTagRequest:
+    properties:
+      meaninig:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.UpdateTagResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API для генерации фидбека учителям.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Feedback Teachers Helper API
+  version: "1.0"
+paths:
+  /add_api_key:
+    post:
+      consumes:
+      - application/json
+      description: Saves encrypted external API key for current teacher
+      parameters:
+      - description: API key payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddAPIKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AddApiKeyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Add API key
+      tags:
+      - teacher
+  /delete_teacher:
+    delete:
+      description: Deletes current teacher account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeleteTeacherResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Delete teacher
+      tags:
+      - teacher
+  /feedback:
+    post:
+      consumes:
+      - application/json
+      description: Generates lesson feedback for students in a group
+      parameters:
+      - description: Feedback payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetFeedbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetFeedbackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Generate feedback
+      tags:
+      - feedback
+  /groups:
+    get:
+      description: Returns all groups for current teacher
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetGroupsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List groups
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Creates a group for current teacher
+      parameters:
+      - description: Group payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CreateGroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create group
+      tags:
+      - groups
+  /groups/{id}:
+    delete:
+      description: Deletes group by group id
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeleteGroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Delete group
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      description: Updates group name by group id
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Group payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateGroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update group
+      tags:
+      - groups
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates teacher and returns JWT token
+      parameters:
+      - description: Login payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Login teacher
+      tags:
+      - teacher
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new teacher account
+      parameters:
+      - description: Register payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Register teacher
+      tags:
+      - teacher
+  /students:
+    post:
+      consumes:
+      - application/json
+      description: Creates student in a group
+      parameters:
+      - description: Student payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.CreateStudentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create student
+      tags:
+      - students
+  /students/{groupId}:
+    get:
+      description: Returns students for group by group id
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetStudentsGroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List group students
+      tags:
+      - students
+  /students/{id}:
+    delete:
+      description: Deletes student by student id
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeleteStudentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Delete student
+      tags:
+      - students
+    put:
+      consumes:
+      - application/json
+      description: Updates student by student id
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Student payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateStudentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update student
+      tags:
+      - students
+  /tag:
+    get:
+      description: Returns all tags for current teacher
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetTeacherTagsRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List tags
+      tags:
+      - tags
+    post:
+      consumes:
+      - application/json
+      description: Creates tag for current teacher
+      parameters:
+      - description: Tag payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateTagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CreateTagResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create tag
+      tags:
+      - tags
+  /tag/{id}:
+    delete:
+      description: Deletes tag by tag id
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeleteTagResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Delete tag
+      tags:
+      - tags
+    put:
+      consumes:
+      - application/json
+      description: Updates tag by tag id
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Tag payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateTagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateTagResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update tag
+      tags:
+      - tags
+securityDefinitions:
+  Bearer:
+    description: 'Введите токен в формате: Bearer <your_token>'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

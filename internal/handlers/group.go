@@ -19,6 +19,19 @@ func NewGroupHandler(groupService *services.GroupService) *GroupHandler {
 	}
 }
 
+// CreateGroup godoc
+// @Summary Create group
+// @Description Creates a group for current teacher
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param input body dto.CreateGroupRequest true "Group payload"
+// @Success 200 {object} dto.CreateGroupResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /groups [post]
 func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -45,6 +58,16 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetGroups godoc
+// @Summary List groups
+// @Description Returns all groups for current teacher
+// @Tags groups
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} dto.GetGroupsResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /groups [get]
 func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -72,6 +95,20 @@ func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// UpdateGroup godoc
+// @Summary Update group
+// @Description Updates group name by group id
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param id path int true "Group ID"
+// @Param input body dto.UpdateGroupRequest true "Group payload"
+// @Success 200 {object} dto.UpdateGroupResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /groups/{id} [put]
 func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -106,6 +143,18 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DeleteGroup godoc
+// @Summary Delete group
+// @Description Deletes group by group id
+// @Tags groups
+// @Produce json
+// @Security Bearer
+// @Param id path int true "Group ID"
+// @Success 200 {object} dto.DeleteGroupResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /groups/{id} [delete]
 func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

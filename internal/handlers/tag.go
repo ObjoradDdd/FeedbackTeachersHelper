@@ -20,6 +20,16 @@ func NewTagHandler(tagService *services.TagService) *TagHandler {
 	}
 }
 
+// GetTeacherTags godoc
+// @Summary List tags
+// @Description Returns all tags for current teacher
+// @Tags tags
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} dto.GetTeacherTagsRequest
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tag [get]
 func (h *TagHandler) GetTeacherTags(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -47,6 +57,19 @@ func (h *TagHandler) GetTeacherTags(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// CreateTag godoc
+// @Summary Create tag
+// @Description Creates tag for current teacher
+// @Tags tags
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param input body dto.CreateTagRequest true "Tag payload"
+// @Success 200 {object} dto.CreateTagResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tag [post]
 func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -77,6 +100,18 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DeleteTag godoc
+// @Summary Delete tag
+// @Description Deletes tag by tag id
+// @Tags tags
+// @Produce json
+// @Security Bearer
+// @Param id path int true "Tag ID"
+// @Success 200 {object} dto.DeleteTagResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tag/{id} [delete]
 func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -106,6 +141,20 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// UpdateTag godoc
+// @Summary Update tag
+// @Description Updates tag by tag id
+// @Tags tags
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param id path int true "Tag ID"
+// @Param input body dto.UpdateTagRequest true "Tag payload"
+// @Success 200 {object} dto.UpdateTagResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tag/{id} [put]
 func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

@@ -163,9 +163,12 @@ func generatePrompt(groupInput *GroupFeedback) string {
 	sb.WriteString("Имя первого ученика ::: Твой отзыв на 2-4 предложения.\n")
 	sb.WriteString("---\n")
 	sb.WriteString("Имя второго ученика ::: Твой отзыв на 2-4 предложения.\n")
+	sb.WriteString("---\n")
+	sb.WriteString("Имя третьего остальных учеников, которых я отправлю ::: Твой отзыв он них в 2-4 предложениях.\n")
 	sb.WriteString("===\n")
 	sb.WriteString("Общее описание урока в 3-5 предложений.\n")
 
+	fmt.Println(sb.String())
 	return sb.String()
 }
 

@@ -18,6 +18,17 @@ func NewTeacherHandler(teacherService *services.TeacherService) *TeacherHandler 
 	}
 }
 
+// Register godoc
+// @Summary Register teacher
+// @Description Creates a new teacher account
+// @Tags teacher
+// @Accept json
+// @Produce json
+// @Param input body dto.RegisterRequest true "Register payload"
+// @Success 201 {object} dto.RegisterResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /register [post]
 func (h *TeacherHandler) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -40,6 +51,17 @@ func (h *TeacherHandler) Register(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Login godoc
+// @Summary Login teacher
+// @Description Authenticates teacher and returns JWT token
+// @Tags teacher
+// @Accept json
+// @Produce json
+// @Param input body dto.LoginRequest true "Login payload"
+// @Success 200 {object} dto.LoginResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /login [post]
 func (h *TeacherHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -60,6 +82,19 @@ func (h *TeacherHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// AddAPIKey godoc
+// @Summary Add API key
+// @Description Saves encrypted external API key for current teacher
+// @Tags teacher
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param input body dto.AddAPIKeyRequest true "API key payload"
+// @Success 200 {object} dto.AddApiKeyResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /add_api_key [post]
 func (h *TeacherHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -86,6 +121,16 @@ func (h *TeacherHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DeleteTeacher godoc
+// @Summary Delete teacher
+// @Description Deletes current teacher account
+// @Tags teacher
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} dto.DeleteTeacherResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /delete_teacher [delete]
 func (h *TeacherHandler) DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

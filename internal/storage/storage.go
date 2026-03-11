@@ -35,11 +35,6 @@ func (s *Storage) Close() error {
 func (s *Storage) InitTables() error {
 	query := `
 
-	DROP TABLE IF EXISTS students CASCADE;
-	DROP TABLE IF EXISTS groups CASCADE;
-	DROP TABLE IF EXISTS teachers CASCADE;
-	DROP TABLE IF EXISTS tags CASCADE;
-
 	CREATE TABLE IF NOT EXISTS teachers (
 		id SERIAL PRIMARY KEY,
 		api_key VARCHAR(255),

@@ -19,6 +19,19 @@ func NewStudentHandler(studentService *services.StudentService) *StudentHandler 
 	}
 }
 
+// CreateStudent godoc
+// @Summary Create student
+// @Description Creates student in a group
+// @Tags students
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param input body dto.CreateStudentRequest true "Student payload"
+// @Success 201 {object} dto.CreateStudentResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /students [post]
 func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -45,6 +58,18 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetStudentsGroup godoc
+// @Summary List group students
+// @Description Returns students for group by group id
+// @Tags students
+// @Produce json
+// @Security Bearer
+// @Param groupId path int true "Group ID"
+// @Success 200 {object} dto.GetStudentsGroupResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /students/{groupId} [get]
 func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -80,6 +105,20 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 	})
 }
 
+// UpdateStudent godoc
+// @Summary Update student
+// @Description Updates student by student id
+// @Tags students
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param id path int true "Student ID"
+// @Param input body dto.UpdateStudentRequest true "Student payload"
+// @Success 200 {object} dto.UpdateStudentResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /students/{id} [put]
 func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -113,6 +152,18 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DeleteStudent godoc
+// @Summary Delete student
+// @Description Deletes student by student id
+// @Tags students
+// @Produce json
+// @Security Bearer
+// @Param id path int true "Student ID"
+// @Success 200 {object} dto.DeleteStudentResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /students/{id} [delete]
 func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

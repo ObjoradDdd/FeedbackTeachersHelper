@@ -18,6 +18,19 @@ func NewFeedbackHandler(feedbackService *services.FeedbackService) *FeedbackHand
 	}
 }
 
+// GetFeedback godoc
+// @Summary Generate feedback
+// @Description Generates lesson feedback for students in a group
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param input body dto.GetFeedbackRequest true "Feedback payload"
+// @Success 200 {object} dto.GetFeedbackResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /feedback [post]
 func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
