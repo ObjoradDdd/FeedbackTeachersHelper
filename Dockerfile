@@ -19,6 +19,6 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 
-EXPOSE 443
+EXPOSE 8443
 
 CMD ["./main"]
