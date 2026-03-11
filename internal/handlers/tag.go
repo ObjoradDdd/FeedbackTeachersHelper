@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
@@ -84,12 +85,15 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.DeleteTagRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
 		return
 	}
 
-	err = h.tagService.DeleteTag(req.Id, teacherId)
+	err = h.tagService.DeleteTag(id, teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -98,7 +102,7 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.DeleteTagResponse{
-		Id: req.Id,
+		Id: id,
 	})
 }
 
@@ -110,13 +114,21 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		return
+	}
+
 	var req dto.UpdateTagRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
 	err = h.tagService.UpdateTag(services.UpdateTagInput{
-		Id:      req.Id,
+		Id:      id,
 		Name:    req.Name,
 		Meaning: req.Meaning,
 	}, teacherId)
@@ -129,6 +141,6 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.UpdateTagResponse{
-		Id: req.Id,
+		Id: id,
 	})
 }

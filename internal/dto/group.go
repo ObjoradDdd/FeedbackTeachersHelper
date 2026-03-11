@@ -19,7 +19,6 @@ type CreateGroupResponse struct {
 }
 
 type UpdateGroupRequest struct {
-	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
 

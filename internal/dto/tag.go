@@ -30,7 +30,6 @@ type DeleteTagResponse struct {
 type UpdateTagRequest struct {
 	Name    string `json:"name"`
 	Meaning string `json:"meaninig"`
-	Id      int    `json:"id"`
 }
 
 type UpdateTagResponse struct {

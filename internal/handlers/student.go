@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
@@ -52,19 +53,22 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var req dto.GetStudentsGroupRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
+	groupIdStr := r.PathValue("groupId")
+	groupId, err := strconv.Atoi(groupIdStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid group ID"})
 		return
 	}
 
-	students, err := h.StudentService.GetGroupStudents(req.Id, teacherId)
+	students, err := h.StudentService.GetGroupStudents(groupId, teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.GetStudentsGroupResponse{
 		Students: func() []dto.StudentDto {
 			dtoStudents := make([]dto.StudentDto, len(students))
@@ -84,12 +88,20 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		return
+	}
+
 	var req dto.UpdateStudentRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
-	if err := h.StudentService.UpdateStudent(req.Id, req.Name, req.GroupId, teacherId); err != nil {
+	if err := h.StudentService.UpdateStudent(id, req.Name, req.GroupId, teacherId); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
@@ -109,12 +121,15 @@ func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.DeleteStudentRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
 		return
 	}
 
-	if err := h.StudentService.DeleteStudent(req.Id, teacherId); err != nil {
+	if err := h.StudentService.DeleteStudent(id, teacherId); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return

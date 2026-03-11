@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
@@ -79,12 +80,20 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		return
+	}
+
 	var req dto.UpdateGroupRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
 		return
 	}
 
-	err = h.groupService.UpdateGroup(req.Id, req.Name, teacherId)
+	err = h.groupService.UpdateGroup(id, req.Name, teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -105,12 +114,15 @@ func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.DeleteGroupRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
 		return
 	}
 
-	err = h.groupService.DeleteGroup(req.Id, teacherId)
+	err = h.groupService.DeleteGroup(id, teacherId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})

@@ -23,7 +23,6 @@ type GetStudentsGroupResponse struct {
 }
 
 type UpdateStudentRequest struct {
-	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	GroupId int    `json:"group_id"`
 }
