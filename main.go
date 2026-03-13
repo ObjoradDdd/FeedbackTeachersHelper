@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -20,52 +22,100 @@ import (
 )
 
 func main() {
+
+	// Создаем контекст, который будет отменен при получении сигнала завершения
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Создаем группу ожидания для управления горутинами
+	wg := &sync.WaitGroup{}
+
+	// Инициализируем логгер
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
+	//  Канал для перехвата критических ошибок сервера
+	serverErrors := make(chan error, 1)
+
+	// Загружаем переменные окружения из .env файла
 	if err := godotenv.Load(); err != nil {
 		slog.Warn("no .env file found, using system environment variables")
 	}
 
+	// Инициализируем хранилище и запускаем сервер
 	db, err := initStorage()
 	if err != nil {
 		slog.Error("failed to initialize storage", "error", err)
-		os.Exit(1)
+		serverErrors <- err
 	}
 	defer db.Close()
 
-	router := setupRouter(db)
-	startKafka(db)
+	// Инициализируем сервисы
+	gemini := llm.NewGeminiClient()
+	userSvc := services.NewUserService(db)
+	groupSvc := services.NewGroupService(db)
+	studentSvc := services.NewStudentService(db)
+	tagSvc := services.NewTagService(db)
+	fbSvc := services.NewFeedbackService(db, gemini)
 
-	port := os.Getenv("SERVER_PORT")
-	if port == "" {
-		port = "5135"
+	// Настраиваем маршруты и запускаем сервер
+	router := setupRouter(userSvc, groupSvc, studentSvc, tagSvc, fbSvc)
+
+	// Запускаем Kafka consumer в отдельной горутине
+	consumersCount, err := strconv.Atoi(os.Getenv("CONSUMERS_COUNT"))
+	if err != nil {
+		slog.Error("failed to parse consumers count", "error", err)
+		serverErrors <- err
+	} else {
+		startKafka(userSvc, ctx, wg, consumersCount)
 	}
 
-	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: handlers.EnableCORS(router),
-	}
+	// Запускаем HTTP сервер
+	var srv *http.Server
 
-	go func() {
-		slog.Info("server is starting", "port", port, "url", "http://localhost:"+port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("server failed", "error", err)
-			os.Exit(1)
+	port, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
+	if err != nil {
+		slog.Warn("invalid SERVER_PORT", "error", err)
+		serverErrors <- err
+	} else {
+		srv = &http.Server{
+			Addr:    fmt.Sprintf(":%d", port),
+			Handler: handlers.EnableCORS(router),
 		}
-	}()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			slog.Info("server is starting", "port", port, "url", fmt.Sprintf("http://localhost:%d", port))
+			serverErrors <- srv.ListenAndServe()
+		}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	slog.Info("received shutdown signal", "signal", (<-quit).String())
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		slog.Error("server forced to shutdown", "error", err)
 	}
-	slog.Info("server exited gracefully")
+
+	// Ожидаем сигнала завершения или ошибки запуска приложения
+	select {
+	case err := <-serverErrors:
+		if err != http.ErrServerClosed {
+			slog.Error("server failed prematurely", "error", err)
+		}
+	case <-ctx.Done():
+		slog.Info("shutdown signal received")
+	}
+
+	// Создаем контекст с таймаутом для корректного завершения сервера
+	if srv != nil {
+		shutdownCtx, serverStop := context.WithTimeout(context.Background(), 10*time.Second)
+		defer serverStop()
+
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			slog.Error("forced shutdown", "error", err)
+			srv.Close()
+		}
+	}
+
+	// Ждем завершения всех горутин (HTTP сервер и Kafka consumer)
+
+	wg.Wait()
+	slog.Info("shutting down server")
 }
 
 func initStorage() (*storage.Storage, error) {
@@ -83,15 +133,8 @@ func initStorage() (*storage.Storage, error) {
 	return db, nil
 }
 
-func setupRouter(db *storage.Storage) *http.ServeMux {
+func setupRouter(userSvc *services.UserService, groupSvc *services.GroupService, studentSvc *services.StudentService, tagSvc *services.TagService, fbSvc *services.FeedbackService) *http.ServeMux {
 	mux := http.NewServeMux()
-
-	gemini := llm.NewGeminiClient()
-	userSvc := services.NewUserService(db)
-	groupSvc := services.NewGroupService(db)
-	studentSvc := services.NewStudentService(db)
-	tagSvc := services.NewTagService(db)
-	fbSvc := services.NewFeedbackService(db, gemini)
 
 	hUser := handlers.NewUserHandler(userSvc)
 	hGroup := handlers.NewGroupHandler(groupSvc)
@@ -119,13 +162,17 @@ func setupRouter(db *storage.Storage) *http.ServeMux {
 	return mux
 }
 
-func startKafka(db *storage.Storage) {
-	userSvc := services.NewUserService(db)
-	consumer := kafka.NewUserConsumer(
+func startKafka(userSvc *services.UserService, ctx context.Context, wg *sync.WaitGroup, consumersCount int) {
+	consumer := kafka.NewConsumerManager(
 		os.Getenv("KAFKA_BROKERS"),
 		userSvc,
 		"fth_group",
 		"user_events",
+		consumersCount,
 	)
-	go consumer.Start()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		consumer.Start(ctx)
+	}()
 }

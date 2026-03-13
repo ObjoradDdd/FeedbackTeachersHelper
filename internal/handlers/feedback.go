@@ -44,7 +44,7 @@ func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feedback, err := h.feedbackService.GenerateFeedback(&services.GenerateFeedbackInput{
+	feedback, err := h.feedbackService.GenerateFeedback(r.Context(), &services.GenerateFeedbackInput{
 		GroupID:           req.GroupId,
 		LessonDescription: req.LessonDescription,
 		Activities:        req.Activities,

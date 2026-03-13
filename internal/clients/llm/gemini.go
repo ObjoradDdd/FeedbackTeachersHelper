@@ -14,17 +14,17 @@ func NewGeminiClient() *GeminiClient {
 	return &GeminiClient{}
 }
 
-func (c *GeminiClient) GenerateFeedback(prompt string, apiKey string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+func (c *GeminiClient) GenerateFeedback(ctx context.Context, prompt string, apiKey string) (string, error) {
+	timeCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	client, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: apiKey})
+	client, err := genai.NewClient(timeCtx, &genai.ClientConfig{APIKey: apiKey})
 	if err != nil {
 		return "", fmt.Errorf("Error creating GenAI client: %w", err)
 	}
 
 	result, err := client.Models.GenerateContent(
-		ctx,
+		timeCtx,
 		"gemini-2.5-flash-lite",
 		genai.Text(prompt),
 		nil,

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -14,7 +15,7 @@ type FeedbackStorage interface {
 }
 
 type LlmClient interface {
-	GenerateFeedback(prompt string, apiKey string) (string, error)
+	GenerateFeedback(ctx context.Context, prompt string, apiKey string) (string, error)
 }
 
 type FeedbackService struct {
@@ -54,7 +55,7 @@ type GroupFeedback struct {
 	Students          []StudentFeedback
 }
 
-func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, userID int) (models.GeneratedGroupFeedback, error) {
+func (s *FeedbackService) GenerateFeedback(ctx context.Context, req *GenerateFeedbackInput, userID int) (models.GeneratedGroupFeedback, error) {
 	hash, err := s.storage.GetApiKey(userID)
 
 	if err != nil {
@@ -118,7 +119,7 @@ func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, userID in
 
 	prompt := generatePrompt(internalInput)
 
-	feedbackText, err := s.llm.GenerateFeedback(prompt, apiKey)
+	feedbackText, err := s.llm.GenerateFeedback(ctx, prompt, apiKey)
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error generating feedback: %w", err)
 	}
