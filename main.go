@@ -11,6 +11,7 @@ import (
 	_ "github.com/ObjoradDdd/FeedbackTeachersHelper/docs"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/clients/llm"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/handlers"
+	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/kafka"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/storage"
 	"github.com/joho/godotenv"
@@ -90,6 +91,11 @@ func main() {
 	studentHandler := handlers.NewStudentHandler(studentService)
 	tagHandler := handlers.NewTagHandler(tagService)
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
+
+	go func() {
+		brokers := os.Getenv("KAFKA_BROKERS")
+		kafka.StartConsumer(brokers, userService)
+	}()
 
 	mux := http.NewServeMux()
 

@@ -27,9 +27,12 @@ require (
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/lib/pq v1.11.2 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/segmentio/kafka-go v0.4.50 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	github.com/swaggo/http-swagger v1.3.4 // indirect
