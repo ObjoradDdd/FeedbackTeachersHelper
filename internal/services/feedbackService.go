@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
-	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/utils"
 )
 
 type FeedbackStorage interface {
@@ -62,7 +61,7 @@ func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, userID in
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
 	}
 
-	apiKey, err := utils.Decrypt(hash)
+	apiKey, err := Decrypt(hash)
 
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)

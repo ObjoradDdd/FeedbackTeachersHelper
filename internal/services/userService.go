@@ -2,8 +2,6 @@ package services
 
 import (
 	"fmt"
-
-	encryption "github.com/ObjoradDdd/FeedbackTeachersHelper/internal/utils"
 )
 
 type UserStorage interface {
@@ -29,7 +27,7 @@ func (s *UserService) DeleteUser(userID int) error {
 }
 
 func (s *UserService) AddApiKey(userID int, apiKey string) error {
-	apiKeyHash, err := encryption.Encrypt(apiKey)
+	apiKeyHash, err := Encrypt(apiKey)
 	if err != nil {
 		return fmt.Errorf("error while encrypting API key: %w", err)
 	}
