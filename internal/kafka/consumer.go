@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -15,46 +14,55 @@ type UserEvent struct {
 	Action string `json:"action"`
 }
 
-type UserDeleter interface {
+type UserService interface {
 	DeleteUser(id int) error
 }
 
-func StartConsumer(brokersStr string, userService UserDeleter) {
-	brokers := strings.Split(brokersStr, ",")
+type UserConsumer struct {
+	reader      *kafka.Reader
+	userService UserService
+}
 
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  brokers,
-		GroupID:  "fth-delete-group",
-		Topic:    "user-events",
-		MaxWait:  1 * time.Second,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
-	})
+func NewUserConsumer(brokers string, userService UserService, group string, topic string) *UserConsumer {
+	return &UserConsumer{
+		reader: kafka.NewReader(kafka.ReaderConfig{
+			Brokers:  strings.Split(brokers, ","),
+			GroupID:  group,
+			Topic:    topic,
+			MinBytes: 10e3,
+			MaxBytes: 10e6,
+		}),
+		userService: userService,
+	}
+}
 
-	defer reader.Close()
-
-	slog.Info("Kafka Consumer started", "brokers", brokersStr, "topic", "user-events")
+func (c *UserConsumer) Start() {
+	defer c.reader.Close()
 
 	for {
-		m, err := reader.ReadMessage(context.Background())
+		m, err := c.reader.FetchMessage(context.Background())
 		if err != nil {
-			slog.Error("Failed to read message from Kafka", "error", err)
-			time.Sleep(1 * time.Second)
+			if context.Background().Err() != nil {
+				return
+			}
+			slog.Error("fetch error", "err", err)
 			continue
 		}
 
 		var event UserEvent
-		if err := json.Unmarshal(m.Value, &event); err != nil {
-			slog.Error("Failed to unmarshal event", "error", err)
-			continue
+		if err := json.Unmarshal(m.Value, &event); err == nil {
+			if event.Action == "delete" {
+				if err := c.userService.DeleteUser(event.UserID); err != nil {
+					slog.Error("delete failed", "user_id", event.UserID, "err", err)
+					continue
+				}
+			}
+		} else {
+			slog.Error("unmarshal error", "err", err)
 		}
 
-		if event.Action == "deleted" {
-
-			err := userService.DeleteUser(event.UserID)
-			if err != nil {
-				slog.Error("Failed to delete user in local DB", "userID", event.UserID, "error", err)
-			}
+		if err := c.reader.CommitMessages(context.Background(), m); err != nil {
+			slog.Error("commit error", "err", err)
 		}
 	}
 }

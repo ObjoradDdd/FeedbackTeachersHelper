@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/ObjoradDdd/FeedbackTeachersHelper/docs"
@@ -15,125 +17,115 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/storage"
 	"github.com/joho/godotenv"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// @title Feedback Helper API
-// @version 1.0
-// @description API для генерации фидбека по ученикам.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host fth.objoraddd.space
-// @BasePath /api
-
-// @securityDefinitions.apikey UserID
-// @in header
-// @name X-User-ID
-// @description Передайте ID пользователя из gateway сервиса
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
 	if err := godotenv.Load(); err != nil {
-		log.Println("warning: no .env file found or error reading it")
+		slog.Warn("no .env file found, using system environment variables")
 	}
 
-	dbHost := os.Getenv("DB_HOST")
-	if dbHost == "" {
-		dbHost = "localhost"
-	}
-	dbPort := os.Getenv("DB_PORT")
-	if dbPort == "" {
-		dbPort = "5432"
-	}
-	dbUser := os.Getenv("DB_USER")
-	if dbUser == "" {
-		dbUser = "student"
-	}
-	dbPassword := os.Getenv("DB_PASSWORD")
-	if dbPassword == "" {
-		dbPassword = "password"
-	}
-	dbName := os.Getenv("DB_NAME")
-	if dbName == "" {
-		dbName = "fth_db"
-	}
-
-	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
-
-	dbStorage, err := storage.New(connString)
+	db, err := initStorage()
 	if err != nil {
-		log.Fatal("❌ Ошибка БД:", err)
+		slog.Error("failed to initialize storage", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	router := setupRouter(db)
+	startKafka(db)
+
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "5135"
 	}
 
-	if err := dbStorage.InitTables(); err != nil {
-		log.Fatal("❌ Ошибка создания таблиц:", err)
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: handlers.EnableCORS(router),
 	}
-
-	defer dbStorage.Close()
-
-	geminiClient := llm.NewGeminiClient()
-
-	userService := services.NewUserService(dbStorage)
-	groupService := services.NewGroupService(dbStorage)
-	studentService := services.NewStudentService(dbStorage)
-	tagService := services.NewTagService(dbStorage)
-	feedbackService := services.NewFeedbackService(dbStorage, geminiClient)
-
-	userHandler := handlers.NewUserHandler(userService)
-	groupHandler := handlers.NewGroupHandler(groupService)
-	studentHandler := handlers.NewStudentHandler(studentService)
-	tagHandler := handlers.NewTagHandler(tagService)
-	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 
 	go func() {
-		brokers := os.Getenv("KAFKA_BROKERS")
-		kafka.StartConsumer(brokers, userService)
+		slog.Info("server is starting", "port", port, "url", "http://localhost:"+port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("server failed", "error", err)
+			os.Exit(1)
+		}
 	}()
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	slog.Info("received shutdown signal", "signal", (<-quit).String())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Error("server forced to shutdown", "error", err)
+	}
+	slog.Info("server exited gracefully")
+}
+
+func initStorage() (*storage.Storage, error) {
+	conn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+
+	db, err := storage.New(conn)
+	if err != nil {
+		return nil, fmt.Errorf("db connection: %w", err)
+	}
+
+	if err := db.InitTables(); err != nil {
+		return nil, fmt.Errorf("migration: %w", err)
+	}
+	return db, nil
+}
+
+func setupRouter(db *storage.Storage) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	// Swagger UI
-	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
+	gemini := llm.NewGeminiClient()
+	userSvc := services.NewUserService(db)
+	groupSvc := services.NewGroupService(db)
+	studentSvc := services.NewStudentService(db)
+	tagSvc := services.NewTagService(db)
+	fbSvc := services.NewFeedbackService(db, gemini)
 
-	// User profile data in this service
-	mux.HandleFunc("POST /api/add_api_key", handlers.AuthMiddleware(userHandler.AddAPIKey))
-	mux.HandleFunc("DELETE /api/delete_user", handlers.AuthMiddleware(userHandler.DeleteUser))
+	hUser := handlers.NewUserHandler(userSvc)
+	hGroup := handlers.NewGroupHandler(groupSvc)
+	hStudent := handlers.NewStudentHandler(studentSvc)
+	hTag := handlers.NewTagHandler(tagSvc)
+	hFb := handlers.NewFeedbackHandler(fbSvc)
 
-	// Groups
-	mux.HandleFunc("POST /api/groups", handlers.AuthMiddleware(groupHandler.CreateGroup))
-	mux.HandleFunc("GET /api/groups", handlers.AuthMiddleware(groupHandler.GetGroups))
-	mux.HandleFunc("DELETE /api/groups/{id}", handlers.AuthMiddleware(groupHandler.DeleteGroup))
-	mux.HandleFunc("PUT /api/groups/{id}", handlers.AuthMiddleware(groupHandler.UpdateGroup))
+	// Роуты остаются прежними
+	mux.HandleFunc("POST /api/add_api_key", handlers.AuthMiddleware(hUser.AddAPIKey))
+	mux.HandleFunc("DELETE /api/delete_user", handlers.AuthMiddleware(hUser.DeleteUser))
+	mux.HandleFunc("POST /api/groups", handlers.AuthMiddleware(hGroup.CreateGroup))
+	mux.HandleFunc("GET /api/groups", handlers.AuthMiddleware(hGroup.GetGroups))
+	mux.HandleFunc("PUT /api/groups/{id}", handlers.AuthMiddleware(hGroup.UpdateGroup))
+	mux.HandleFunc("DELETE /api/groups/{id}", handlers.AuthMiddleware(hGroup.DeleteGroup))
+	mux.HandleFunc("POST /api/students", handlers.AuthMiddleware(hStudent.CreateStudent))
+	mux.HandleFunc("GET /api/students/{groupId}", handlers.AuthMiddleware(hStudent.GetStudentsGroup))
+	mux.HandleFunc("PUT /api/students/{id}", handlers.AuthMiddleware(hStudent.UpdateStudent))
+	mux.HandleFunc("DELETE /api/students/{id}", handlers.AuthMiddleware(hStudent.DeleteStudent))
+	mux.HandleFunc("GET /api/tag", handlers.AuthMiddleware(hTag.GetUserTags))
+	mux.HandleFunc("POST /api/tag", handlers.AuthMiddleware(hTag.CreateTag))
+	mux.HandleFunc("PUT /api/tag/{id}", handlers.AuthMiddleware(hTag.UpdateTag))
+	mux.HandleFunc("DELETE /api/tag/{id}", handlers.AuthMiddleware(hTag.DeleteTag))
+	mux.HandleFunc("POST /api/feedback", handlers.AuthMiddleware(hFb.GetFeedback))
 
-	// Students
-	mux.HandleFunc("POST /api/students", handlers.AuthMiddleware(studentHandler.CreateStudent))
-	mux.HandleFunc("GET /api/students/{groupId}", handlers.AuthMiddleware(studentHandler.GetStudentsGroup))
-	mux.HandleFunc("DELETE /api/students/{id}", handlers.AuthMiddleware(studentHandler.DeleteStudent))
-	mux.HandleFunc("PUT /api/students/{id}", handlers.AuthMiddleware(studentHandler.UpdateStudent))
+	return mux
+}
 
-	// Tags
-	mux.HandleFunc("GET /api/tag", handlers.AuthMiddleware(tagHandler.GetUserTags))
-	mux.HandleFunc("POST /api/tag", handlers.AuthMiddleware(tagHandler.CreateTag))
-	mux.HandleFunc("PUT /api/tag/{id}", handlers.AuthMiddleware(tagHandler.UpdateTag))
-	mux.HandleFunc("DELETE /api/tag/{id}", handlers.AuthMiddleware(tagHandler.DeleteTag))
-
-	// Feedback
-	mux.HandleFunc("POST /api/feedback", handlers.AuthMiddleware(feedbackHandler.GetFeedback))
-
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(time.Now().String()))
-		slog.Info("User visited the site")
-	})
-
-	fmt.Println("🌐 Сервер запущен на https://localhost:5134")
-	if err := http.ListenAndServe(":5135", handlers.EnableCORS(mux)); err != nil {
-		log.Fatal("❌ Ошибка запуска сервера:", err)
-	}
+func startKafka(db *storage.Storage) {
+	userSvc := services.NewUserService(db)
+	consumer := kafka.NewUserConsumer(
+		os.Getenv("KAFKA_BROKERS"),
+		userSvc,
+		"fth_group",
+		"user_events",
+	)
+	go consumer.Start()
 }
