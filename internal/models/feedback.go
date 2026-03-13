@@ -17,8 +17,8 @@ func (s GeneratedStudentFeedback) ToDto() dto.StudentFeedbackResponse {
 }
 
 type GeneratedGroupFeedback struct {
-	TeacherId         int
-	GroupId           int
+	UserID            int
+	GroupID           int
 	LessonDescription string
 	Students          []GeneratedStudentFeedback
 }
@@ -30,8 +30,8 @@ func (g GeneratedGroupFeedback) ToDto() dto.GetFeedbackResponse {
 	}
 
 	return dto.GetFeedbackResponse{
-		TeacherId:         g.TeacherId,
-		GroupId:           g.GroupId,
+		UserID:            g.UserID,
+		GroupId:           g.GroupID,
 		LessonDescription: g.LessonDescription,
 		Students:          studentsDto,
 	}

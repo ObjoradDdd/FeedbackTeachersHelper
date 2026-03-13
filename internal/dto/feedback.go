@@ -14,7 +14,7 @@ type StudentFeedbackRequest struct {
 }
 
 type GetFeedbackResponse struct {
-	TeacherId         int                       `json:"teacher_id"`
+	UserID            int                       `json:"user_id"`
 	GroupId           int                       `json:"group_id"`
 	LessonDescription string                    `json:"lesson_description"`
 	Students          []StudentFeedbackResponse `json:"students"`

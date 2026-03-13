@@ -17,9 +17,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// @title Feedback Teachers Helper API
+// @title Feedback Helper API
 // @version 1.0
-// @description API для генерации фидбека учителям.
+// @description API для генерации фидбека по ученикам.
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
@@ -29,13 +29,13 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
+// @host fth.objoraddd.space
 // @BasePath /api
 
-// @securityDefinitions.apikey Bearer
+// @securityDefinitions.apikey UserID
 // @in header
-// @name Authorization
-// @description Введите токен в формате: Bearer <your_token>
+// @name X-User-ID
+// @description Передайте ID пользователя из gateway сервиса
 func main() {
 
 	if err := godotenv.Load(); err != nil {
@@ -60,7 +60,7 @@ func main() {
 	}
 	dbName := os.Getenv("DB_NAME")
 	if dbName == "" {
-		dbName = "learn_orm"
+		dbName = "fth_db"
 	}
 
 	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -79,13 +79,13 @@ func main() {
 
 	geminiClient := llm.NewGeminiClient()
 
-	teacherService := services.NewTeacherService(dbStorage)
+	userService := services.NewUserService(dbStorage)
 	groupService := services.NewGroupService(dbStorage)
 	studentService := services.NewStudentService(dbStorage)
 	tagService := services.NewTagService(dbStorage)
 	feedbackService := services.NewFeedbackService(dbStorage, geminiClient)
 
-	teacherHandler := handlers.NewTeacherHandler(teacherService)
+	userHandler := handlers.NewUserHandler(userService)
 	groupHandler := handlers.NewGroupHandler(groupService)
 	studentHandler := handlers.NewStudentHandler(studentService)
 	tagHandler := handlers.NewTagHandler(tagService)
@@ -96,11 +96,9 @@ func main() {
 	// Swagger UI
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 
-	// Auth & Teacher
-	mux.HandleFunc("POST /api/register", teacherHandler.Register)
-	mux.HandleFunc("POST /api/login", teacherHandler.Login)
-	mux.HandleFunc("POST /api/add_api_key", handlers.AuthMiddleware(teacherHandler.AddAPIKey))
-	mux.HandleFunc("DELETE /api/delete_teacher", handlers.AuthMiddleware(teacherHandler.DeleteTeacher))
+	// User profile data in this service
+	mux.HandleFunc("POST /api/add_api_key", handlers.AuthMiddleware(userHandler.AddAPIKey))
+	mux.HandleFunc("DELETE /api/delete_user", handlers.AuthMiddleware(userHandler.DeleteUser))
 
 	// Groups
 	mux.HandleFunc("POST /api/groups", handlers.AuthMiddleware(groupHandler.CreateGroup))
@@ -115,7 +113,7 @@ func main() {
 	mux.HandleFunc("PUT /api/students/{id}", handlers.AuthMiddleware(studentHandler.UpdateStudent))
 
 	// Tags
-	mux.HandleFunc("GET /api/tag", handlers.AuthMiddleware(tagHandler.GetTeacherTags))
+	mux.HandleFunc("GET /api/tag", handlers.AuthMiddleware(tagHandler.GetUserTags))
 	mux.HandleFunc("POST /api/tag", handlers.AuthMiddleware(tagHandler.CreateTag))
 	mux.HandleFunc("PUT /api/tag/{id}", handlers.AuthMiddleware(tagHandler.UpdateTag))
 	mux.HandleFunc("DELETE /api/tag/{id}", handlers.AuthMiddleware(tagHandler.DeleteTag))
@@ -128,8 +126,8 @@ func main() {
 		slog.Info("User visited the site")
 	})
 
-	fmt.Println("🌐 Сервер запущен на https://localhost:8443")
-	if err := http.ListenAndServeTLS(":8443", "cert.pem", "key.pem", handlers.EnableCORS(mux)); err != nil {
+	fmt.Println("🌐 Сервер запущен на https://localhost:5134")
+	if err := http.ListenAndServe(":5135", handlers.EnableCORS(mux)); err != nil {
 		log.Fatal("❌ Ошибка запуска сервера:", err)
 	}
 }

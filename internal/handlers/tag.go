@@ -20,25 +20,25 @@ func NewTagHandler(tagService *services.TagService) *TagHandler {
 	}
 }
 
-// GetTeacherTags godoc
+// GetUserTags godoc
 // @Summary List tags
-// @Description Returns all tags for current teacher
+// @Description Returns all tags for current user
 // @Tags tags
 // @Produce json
-// @Security Bearer
-// @Success 200 {object} dto.GetTeacherTagsRequest
+// @Security UserID
+// @Success 200 {object} dto.GetUserTagsResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /tag [get]
-func (h *TagHandler) GetTeacherTags(w http.ResponseWriter, r *http.Request) {
+func (h *TagHandler) GetUserTags(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
 
-	tags, err := h.tagService.GetTeachersTags(teacherId)
+	tags, err := h.tagService.GetUserTags(userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -46,7 +46,7 @@ func (h *TagHandler) GetTeacherTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.GetTeacherTagsRequest{
+	json.NewEncoder(w).Encode(dto.GetUserTagsResponse{
 		Tags: func(tags []models.Tag) []dto.TagDto {
 			tagsDto := make([]dto.TagDto, len(tags))
 			for i, tag := range tags {
@@ -59,11 +59,11 @@ func (h *TagHandler) GetTeacherTags(w http.ResponseWriter, r *http.Request) {
 
 // CreateTag godoc
 // @Summary Create tag
-// @Description Creates tag for current teacher
+// @Description Creates tag for current user
 // @Tags tags
 // @Accept json
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param input body dto.CreateTagRequest true "Tag payload"
 // @Success 200 {object} dto.CreateTagResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -73,7 +73,7 @@ func (h *TagHandler) GetTeacherTags(w http.ResponseWriter, r *http.Request) {
 func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -86,7 +86,7 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	tagId, err := h.tagService.CreateTag(services.CreateTagInput{
 		Name:    req.Name,
 		Meaning: req.Meaning,
-	}, teacherId)
+	}, userID)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -105,7 +105,7 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 // @Description Deletes tag by tag id
 // @Tags tags
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param id path int true "Tag ID"
 // @Success 200 {object} dto.DeleteTagResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -115,7 +115,7 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.tagService.DeleteTag(id, teacherId)
+	err = h.tagService.DeleteTag(id, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -147,7 +147,7 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 // @Tags tags
 // @Accept json
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param id path int true "Tag ID"
 // @Param input body dto.UpdateTagRequest true "Tag payload"
 // @Success 200 {object} dto.UpdateTagResponse
@@ -158,7 +158,7 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -180,7 +180,7 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 		Id:      id,
 		Name:    req.Name,
 		Meaning: req.Meaning,
-	}, teacherId)
+	}, userID)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

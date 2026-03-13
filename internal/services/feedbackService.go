@@ -9,9 +9,9 @@ import (
 )
 
 type FeedbackStorage interface {
-	GetApiKey(teacherId int) (string, error)
-	GetGroupStudents(groupId int, teacherId int) ([]models.Student, error)
-	GetTeachersTags(teacherId int) ([]models.Tag, error)
+	GetApiKey(userID int) (string, error)
+	GetGroupStudents(groupID int, userID int) ([]models.Student, error)
+	GetUserTags(userID int) ([]models.Tag, error)
 }
 
 type LlmClient interface {
@@ -34,8 +34,7 @@ type StudentFeedbackInput struct {
 }
 
 type GenerateFeedbackInput struct {
-	TeacherId         int
-	GroupId           int
+	GroupID           int
 	LessonDescription string
 	Activities        string
 	Students          []StudentFeedbackInput
@@ -49,15 +48,15 @@ type StudentFeedback struct {
 }
 
 type GroupFeedback struct {
-	TeacherId         int
-	GroupId           int
+	UserID            int
+	GroupID           int
 	LessonDescription string
 	Activities        string
 	Students          []StudentFeedback
 }
 
-func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, teacherId int) (models.GeneratedGroupFeedback, error) {
-	hash, err := s.storage.GetApiKey(teacherId)
+func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, userID int) (models.GeneratedGroupFeedback, error) {
+	hash, err := s.storage.GetApiKey(userID)
 
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
@@ -69,12 +68,12 @@ func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, teacherId
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
 	}
 
-	groupStudents, err := s.storage.GetGroupStudents(req.GroupId, teacherId)
+	groupStudents, err := s.storage.GetGroupStudents(req.GroupID, userID)
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching students: %w", err)
 	}
 
-	teacherTags, err := s.storage.GetTeachersTags(teacherId)
+	userTags, err := s.storage.GetUserTags(userID)
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching tags: %w", err)
 	}
@@ -85,13 +84,13 @@ func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, teacherId
 	}
 
 	tagMap := make(map[int]models.Tag)
-	for _, tag := range teacherTags {
+	for _, tag := range userTags {
 		tagMap[tag.Id] = tag
 	}
 
 	internalInput := &GroupFeedback{
-		TeacherId:         teacherId,
-		GroupId:           req.GroupId,
+		UserID:            userID,
+		GroupID:           req.GroupID,
 		LessonDescription: req.LessonDescription,
 		Activities:        req.Activities,
 		Students:          make([]StudentFeedback, 0, len(req.Students)),
@@ -100,7 +99,7 @@ func (s *FeedbackService) GenerateFeedback(req *GenerateFeedbackInput, teacherId
 	for _, studentReq := range req.Students {
 		studentName, exists := studentMap[studentReq.StudentId]
 		if !exists {
-			return models.GeneratedGroupFeedback{}, fmt.Errorf("student with Id %d not found in group %d", studentReq.StudentId, req.GroupId)
+			return models.GeneratedGroupFeedback{}, fmt.Errorf("student with Id %d not found in group %d", studentReq.StudentId, req.GroupID)
 		}
 
 		var studentTags []models.Tag
@@ -182,8 +181,8 @@ func mapOutput(llmOutput string, input *GroupFeedback) (*models.GeneratedGroupFe
 	lessonDesc := strings.TrimSpace(parts[1])
 
 	result := &models.GeneratedGroupFeedback{
-		TeacherId:         input.TeacherId,
-		GroupId:           input.GroupId,
+		UserID:            input.UserID,
+		GroupID:           input.GroupID,
 		LessonDescription: lessonDesc,
 		Students:          make([]models.GeneratedStudentFeedback, 0, len(input.Students)),
 	}

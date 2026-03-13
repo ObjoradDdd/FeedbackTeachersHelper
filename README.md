@@ -1,2 +1,2 @@
 # FeedbackTeachersHelper
-An app to help teachers create feedback using AI
+An app to generate student feedback using AI

@@ -35,25 +35,58 @@ func (s *Storage) Close() error {
 func (s *Storage) InitTables() error {
 	query := `
 
-	CREATE TABLE IF NOT EXISTS teachers (
-		id SERIAL PRIMARY KEY,
-		api_key VARCHAR(255),
-		login VARCHAR(255) NOT NULL UNIQUE,	
-		hash VARCHAR(255) NOT NULL
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY,
+		api_key VARCHAR(255)
 	);
+
+	DO $$
+	BEGIN
+		IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'teachers') THEN
+			INSERT INTO users (id, api_key)
+			SELECT id, api_key FROM teachers
+			ON CONFLICT (id) DO UPDATE SET api_key = EXCLUDED.api_key;
+		END IF;
+	END $$;
 
 	CREATE TABLE IF NOT EXISTS tags (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(255) NOT NULL,	
 		meaning VARCHAR(255) NOT NULL,
-		teacher_id INTEGER REFERENCES teachers(id) ON DELETE CASCADE
+		user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 	);
+
+	ALTER TABLE tags ADD COLUMN IF NOT EXISTS user_id INTEGER;
+
+	DO $$
+	BEGIN
+		IF EXISTS (
+			SELECT 1
+			FROM information_schema.columns
+			WHERE table_name = 'tags' AND column_name = 'teacher_id'
+		) THEN
+			UPDATE tags SET user_id = teacher_id WHERE user_id IS NULL;
+		END IF;
+	END $$;
 
 	CREATE TABLE IF NOT EXISTS groups (
 		id SERIAL PRIMARY KEY,
-		teacher_id INTEGER REFERENCES teachers(id) ON DELETE CASCADE,
+		user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
 		name VARCHAR(255) NOT NULL
 	);
+
+	ALTER TABLE groups ADD COLUMN IF NOT EXISTS user_id INTEGER;
+
+	DO $$
+	BEGIN
+		IF EXISTS (
+			SELECT 1
+			FROM information_schema.columns
+			WHERE table_name = 'groups' AND column_name = 'teacher_id'
+		) THEN
+			UPDATE groups SET user_id = teacher_id WHERE user_id IS NULL;
+		END IF;
+	END $$;
 
 	CREATE TABLE IF NOT EXISTS students (
 		id SERIAL PRIMARY KEY,

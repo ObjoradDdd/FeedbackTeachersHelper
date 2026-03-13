@@ -6,21 +6,31 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-func (s *Storage) CreateTag(tag *models.Tag, teacherId int) (int, error) {
-	query := `INSERT INTO tags (name, meaning, teacher_id) VALUES ($1, $2, $3) RETURNING id`
+func (s *Storage) CreateTag(tag *models.Tag, userID int) (int, error) {
+	if err := s.ensureUserExists(userID); err != nil {
+		return 0, err
+	}
+
+	query := `
+		INSERT INTO tags (name, meaning, user_id) VALUES ($1, $2, $3) RETURNING id
+	`
 	var tagId int
 
-	if err := s.db.QueryRow(query, tag.Name, tag.Meaning, teacherId).Scan(&tagId); err != nil {
+	if err := s.db.QueryRow(query, tag.Name, tag.Meaning, userID).Scan(&tagId); err != nil {
 		return 0, fmt.Errorf("Error adding tag %s: %w", tag.Name, err)
 	}
 
 	return tagId, nil
 }
 
-func (s *Storage) GetTeachersTags(teacherId int) ([]models.Tag, error) {
-	query := `SELECT id, name, meaning FROM tags WHERE teacher_id = $1`
+func (s *Storage) GetUserTags(userID int) ([]models.Tag, error) {
+	if err := s.ensureUserExists(userID); err != nil {
+		return nil, err
+	}
 
-	rows, err := s.db.Query(query, teacherId)
+	query := `SELECT id, name, meaning FROM tags WHERE user_id = $1`
+
+	rows, err := s.db.Query(query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching tags: %w", err)
 	}
@@ -38,20 +48,28 @@ func (s *Storage) GetTeachersTags(teacherId int) ([]models.Tag, error) {
 	return tags, nil
 }
 
-func (s *Storage) DeleteTag(id int, teacherId int) error {
-	query := `DELETE FROM tags WHERE id = $1 AND teacher_id = $2`
+func (s *Storage) DeleteTag(id int, userID int) error {
+	if err := s.ensureUserExists(userID); err != nil {
+		return err
+	}
 
-	if _, err := s.db.Exec(query, id, teacherId); err != nil {
+	query := `DELETE FROM tags WHERE id = $1 AND user_id = $2`
+
+	if _, err := s.db.Exec(query, id, userID); err != nil {
 		return fmt.Errorf("Error deleting tag: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) UpdateTag(tag *models.Tag, teacherId int) error {
-	query := `UPDATE tags SET name = $1, meaning = $2 WHERE id = $3 AND teacher_id = $4`
+func (s *Storage) UpdateTag(tag *models.Tag, userID int) error {
+	if err := s.ensureUserExists(userID); err != nil {
+		return err
+	}
 
-	result, err := s.db.Exec(query, tag.Name, tag.Meaning, tag.Id, teacherId)
+	query := `UPDATE tags SET name = $1, meaning = $2 WHERE id = $3 AND user_id = $4`
+
+	result, err := s.db.Exec(query, tag.Name, tag.Meaning, tag.Id, userID)
 
 	if err != nil {
 		return fmt.Errorf("Error updating tag: %w", err)
@@ -62,7 +80,7 @@ func (s *Storage) UpdateTag(tag *models.Tag, teacherId int) error {
 		return fmt.Errorf("Error checking update result: %w", err)
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("No tag updated, check if tag exists and belongs to teacher Id %d", teacherId)
+		return fmt.Errorf("No tag updated, check if tag exists and belongs to user ID %d", userID)
 	}
 
 	return nil

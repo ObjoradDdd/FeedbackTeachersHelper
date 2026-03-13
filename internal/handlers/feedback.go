@@ -24,7 +24,7 @@ func NewFeedbackHandler(feedbackService *services.FeedbackService) *FeedbackHand
 // @Tags feedback
 // @Accept json
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param input body dto.GetFeedbackRequest true "Feedback payload"
 // @Success 200 {object} dto.GetFeedbackResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -34,7 +34,7 @@ func NewFeedbackHandler(feedbackService *services.FeedbackService) *FeedbackHand
 func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -45,8 +45,7 @@ func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	feedback, err := h.feedbackService.GenerateFeedback(&services.GenerateFeedbackInput{
-		TeacherId:         teacherId,
-		GroupId:           req.GroupId,
+		GroupID:           req.GroupId,
 		LessonDescription: req.LessonDescription,
 		Activities:        req.Activities,
 		Students: func(students []dto.StudentFeedbackRequest) []services.StudentFeedbackInput {
@@ -60,7 +59,7 @@ func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 			}
 			return studentsInput
 		}(req.Students),
-	}, teacherId)
+	}, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})

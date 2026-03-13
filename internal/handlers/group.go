@@ -21,11 +21,11 @@ func NewGroupHandler(groupService *services.GroupService) *GroupHandler {
 
 // CreateGroup godoc
 // @Summary Create group
-// @Description Creates a group for current teacher
+// @Description Creates a group for current user
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param input body dto.CreateGroupRequest true "Group payload"
 // @Success 200 {object} dto.CreateGroupResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -35,7 +35,7 @@ func NewGroupHandler(groupService *services.GroupService) *GroupHandler {
 func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupId, err := h.groupService.CreateGroup(req.Name, teacherId)
+	groupId, err := h.groupService.CreateGroup(req.Name, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -60,10 +60,10 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 
 // GetGroups godoc
 // @Summary List groups
-// @Description Returns all groups for current teacher
+// @Description Returns all groups for current user
 // @Tags groups
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Success 200 {object} dto.GetGroupsResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
@@ -71,12 +71,12 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
 
-	groups, err := h.groupService.GetTeachersGroups(teacherId)
+	groups, err := h.groupService.GetUserGroups(userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -101,7 +101,7 @@ func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param id path int true "Group ID"
 // @Param input body dto.UpdateGroupRequest true "Group payload"
 // @Success 200 {object} dto.UpdateGroupResponse
@@ -112,7 +112,7 @@ func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -130,7 +130,7 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.groupService.UpdateGroup(id, req.Name, teacherId)
+	err = h.groupService.UpdateGroup(id, req.Name, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -148,7 +148,7 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 // @Description Deletes group by group id
 // @Tags groups
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param id path int true "Group ID"
 // @Success 200 {object} dto.DeleteGroupResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -158,7 +158,7 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -171,7 +171,7 @@ func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.groupService.DeleteGroup(id, teacherId)
+	err = h.groupService.DeleteGroup(id, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})

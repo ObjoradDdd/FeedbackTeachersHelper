@@ -3,17 +3,17 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: pg_base
+    container_name: fth_postgres
     environment:
       POSTGRES_USER: student
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: learn_orm
+      POSTGRES_DB: fth_db
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U student -d learn_orm"]
+      test: ["CMD-SHELL", "pg_isready -U student -d fth_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,14 +22,14 @@ services:
     build:
       context: .
       network: host
-    container_name: go_app
+    container_name: fth_app
     network_mode: "host"
     environment:
       - DB_HOST=127.0.0.1 
       - DB_PORT=5432
       - DB_USER=student
       - DB_PASSWORD=password
-      - DB_NAME=learn_orm
+      - DB_NAME=fth_db
     volumes:
       - ./cert.pem:/app/cert.pem:ro
       - ./key.pem:/app/key.pem:ro

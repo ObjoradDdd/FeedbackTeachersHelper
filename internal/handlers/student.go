@@ -25,7 +25,7 @@ func NewStudentHandler(studentService *services.StudentService) *StudentHandler 
 // @Tags students
 // @Accept json
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param input body dto.CreateStudentRequest true "Student payload"
 // @Success 201 {object} dto.CreateStudentResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -35,7 +35,7 @@ func NewStudentHandler(studentService *services.StudentService) *StudentHandler 
 func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	studentId, err := h.StudentService.CreateStudent(req.Name, req.GroupId, teacherId)
+	studentId, err := h.StudentService.CreateStudent(req.Name, req.GroupId, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -63,7 +63,7 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 // @Description Returns students for group by group id
 // @Tags students
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param groupId path int true "Group ID"
 // @Success 200 {object} dto.GetStudentsGroupResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -73,7 +73,7 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -86,7 +86,7 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	students, err := h.StudentService.GetGroupStudents(groupId, teacherId)
+	students, err := h.StudentService.GetGroupStudents(groupId, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -111,7 +111,7 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 // @Tags students
 // @Accept json
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param id path int true "Student ID"
 // @Param input body dto.UpdateStudentRequest true "Student payload"
 // @Success 200 {object} dto.UpdateStudentResponse
@@ -122,7 +122,7 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -140,7 +140,7 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.StudentService.UpdateStudent(id, req.Name, req.GroupId, teacherId); err != nil {
+	if err := h.StudentService.UpdateStudent(id, req.Name, req.GroupId, userID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
@@ -157,7 +157,7 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 // @Description Deletes student by student id
 // @Tags students
 // @Produce json
-// @Security Bearer
+// @Security UserID
 // @Param id path int true "Student ID"
 // @Success 200 {object} dto.DeleteStudentResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -167,7 +167,7 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	teacherId, err := GetTeacherIdFromToken(w, r)
+	userID, err := GetUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -180,7 +180,7 @@ func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.StudentService.DeleteStudent(id, teacherId); err != nil {
+	if err := h.StudentService.DeleteStudent(id, userID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return

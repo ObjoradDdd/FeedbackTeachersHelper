@@ -6,7 +6,7 @@ type TagDto struct {
 	Id      int    `json:"id"`
 }
 
-type GetTeacherTagsRequest struct {
+type GetUserTagsResponse struct {
 	Tags []TagDto `json:"tags"`
 }
 
@@ -29,7 +29,7 @@ type DeleteTagResponse struct {
 
 type UpdateTagRequest struct {
 	Name    string `json:"name"`
-	Meaning string `json:"meaninig"`
+	Meaning string `json:"meaning"`
 }
 
 type UpdateTagResponse struct {

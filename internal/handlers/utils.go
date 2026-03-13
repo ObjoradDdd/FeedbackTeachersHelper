@@ -13,13 +13,13 @@ func RespondWithError(w http.ResponseWriter, code int, message string) {
 	json.NewEncoder(w).Encode(dto.ErrorResponse{Error: message})
 }
 
-func GetTeacherIdFromToken(w http.ResponseWriter, r *http.Request) (int, error) {
-	teacherId, ok := r.Context().Value(TeacherIdKey).(int)
+func GetUserID(w http.ResponseWriter, r *http.Request) (int, error) {
+	userID, ok := r.Context().Value(UserIDKey).(int)
 	if !ok {
-		RespondWithError(w, http.StatusInternalServerError, "internal server error: failed to get teacher id from context")
-		return 0, errors.New("teacher id not found in context")
+		RespondWithError(w, http.StatusInternalServerError, "internal server error: failed to get user id from context")
+		return 0, errors.New("user id not found in context")
 	}
-	return teacherId, nil
+	return userID, nil
 }
 
 func DecodeRequest(w http.ResponseWriter, r *http.Request, req any) error {

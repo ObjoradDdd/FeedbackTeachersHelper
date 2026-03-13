@@ -59,7 +59,7 @@ definitions:
       id:
         type: integer
     type: object
-  dto.DeleteTeacherResponse:
+  dto.DeleteUserResponse:
     properties:
       message:
         type: string
@@ -92,7 +92,7 @@ definitions:
         items:
           $ref: '#/definitions/dto.StudentFeedbackResponse'
         type: array
-      teacher_id:
+      user_id:
         type: integer
     type: object
   dto.GetGroupsResponse:
@@ -109,7 +109,7 @@ definitions:
           $ref: '#/definitions/dto.StudentDto'
         type: array
     type: object
-  dto.GetTeacherTagsRequest:
+  dto.GetUserTagsResponse:
     properties:
       tags:
         items:
@@ -126,32 +126,6 @@ definitions:
         items:
           $ref: '#/definitions/dto.StudentDto'
         type: array
-    type: object
-  dto.LoginRequest:
-    properties:
-      login:
-        type: string
-      password:
-        type: string
-    type: object
-  dto.LoginResponse:
-    properties:
-      token:
-        type: string
-    type: object
-  dto.RegisterRequest:
-    properties:
-      login:
-        type: string
-      password:
-        type: string
-    type: object
-  dto.RegisterResponse:
-    properties:
-      message:
-        type: string
-      teacher_id:
-        type: integer
     type: object
   dto.StudentDto:
     properties:
@@ -213,7 +187,7 @@ definitions:
     type: object
   dto.UpdateTagRequest:
     properties:
-      meaninig:
+      meaning:
         type: string
       name:
         type: string
@@ -223,25 +197,25 @@ definitions:
       id:
         type: integer
     type: object
-host: localhost:8080
+host: fth.objoraddd.space
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: API для генерации фидбека учителям.
+  description: API для генерации фидбека по ученикам.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Feedback Teachers Helper API
+  title: Feedback Helper API
   version: "1.0"
 paths:
   /add_api_key:
     post:
       consumes:
       - application/json
-      description: Saves encrypted external API key for current teacher
+      description: Saves encrypted external API key for current user
       parameters:
       - description: API key payload
         in: body
@@ -269,20 +243,20 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Add API key
       tags:
-      - teacher
-  /delete_teacher:
+      - users
+  /delete_user:
     delete:
-      description: Deletes current teacher account
+      description: Deletes current user account
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.DeleteTeacherResponse'
+            $ref: '#/definitions/dto.DeleteUserResponse'
         "401":
           description: Unauthorized
           schema:
@@ -292,10 +266,10 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
-      summary: Delete teacher
+      - UserID: []
+      summary: Delete user
       tags:
-      - teacher
+      - users
   /feedback:
     post:
       consumes:
@@ -328,13 +302,13 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Generate feedback
       tags:
       - feedback
   /groups:
     get:
-      description: Returns all groups for current teacher
+      description: Returns all groups for current user
       produces:
       - application/json
       responses:
@@ -351,14 +325,14 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: List groups
       tags:
       - groups
     post:
       consumes:
       - application/json
-      description: Creates a group for current teacher
+      description: Creates a group for current user
       parameters:
       - description: Group payload
         in: body
@@ -386,7 +360,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Create group
       tags:
       - groups
@@ -419,7 +393,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Delete group
       tags:
       - groups
@@ -459,70 +433,10 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Update group
       tags:
       - groups
-  /login:
-    post:
-      consumes:
-      - application/json
-      description: Authenticates teacher and returns JWT token
-      parameters:
-      - description: Login payload
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/dto.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.LoginResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Login teacher
-      tags:
-      - teacher
-  /register:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new teacher account
-      parameters:
-      - description: Register payload
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.RegisterResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Register teacher
-      tags:
-      - teacher
   /students:
     post:
       consumes:
@@ -555,7 +469,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Create student
       tags:
       - students
@@ -588,7 +502,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: List group students
       tags:
       - students
@@ -621,7 +535,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Delete student
       tags:
       - students
@@ -661,20 +575,20 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Update student
       tags:
       - students
   /tag:
     get:
-      description: Returns all tags for current teacher
+      description: Returns all tags for current user
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GetTeacherTagsRequest'
+            $ref: '#/definitions/dto.GetUserTagsResponse'
         "401":
           description: Unauthorized
           schema:
@@ -684,14 +598,14 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: List tags
       tags:
       - tags
     post:
       consumes:
       - application/json
-      description: Creates tag for current teacher
+      description: Creates tag for current user
       parameters:
       - description: Tag payload
         in: body
@@ -719,7 +633,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Create tag
       tags:
       - tags
@@ -752,7 +666,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Delete tag
       tags:
       - tags
@@ -792,14 +706,14 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - Bearer: []
+      - UserID: []
       summary: Update tag
       tags:
       - tags
 securityDefinitions:
-  Bearer:
-    description: 'Введите токен в формате: Bearer <your_token>'
+  UserID:
+    description: Передайте ID пользователя из gateway сервиса
     in: header
-    name: Authorization
+    name: X-User-ID
     type: apiKey
 swagger: "2.0"

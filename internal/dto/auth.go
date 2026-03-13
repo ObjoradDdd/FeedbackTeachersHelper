@@ -1,24 +1,5 @@
 package dto
 
-type RegisterRequest struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
-}
-
-type RegisterResponse struct {
-	TeacherId int    `json:"teacher_id"`
-	Message   string `json:"message"`
-}
-
-type LoginRequest struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
-}
-
-type LoginResponse struct {
-	Token string `json:"token"`
-}
-
-type DeleteTeacherResponse struct {
+type DeleteUserResponse struct {
 	Message string `json:"message"`
 }

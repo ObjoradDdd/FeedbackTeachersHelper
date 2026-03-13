@@ -28,10 +28,10 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
-                "description": "Saves encrypted external API key for current teacher",
+                "description": "Saves encrypted external API key for current user",
                 "consumes": [
                     "application/json"
                 ],
@@ -39,7 +39,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "teacher"
+                    "users"
                 ],
                 "summary": "Add API key",
                 "parameters": [
@@ -81,26 +81,26 @@ const docTemplate = `{
                 }
             }
         },
-        "/delete_teacher": {
+        "/delete_user": {
             "delete": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
-                "description": "Deletes current teacher account",
+                "description": "Deletes current user account",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "teacher"
+                    "users"
                 ],
-                "summary": "Delete teacher",
+                "summary": "Delete user",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.DeleteTeacherResponse"
+                            "$ref": "#/definitions/dto.DeleteUserResponse"
                         }
                     },
                     "401": {
@@ -122,7 +122,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Generates lesson feedback for students in a group",
@@ -179,10 +179,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
-                "description": "Returns all groups for current teacher",
+                "description": "Returns all groups for current user",
                 "produces": [
                     "application/json"
                 ],
@@ -214,10 +214,10 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
-                "description": "Creates a group for current teacher",
+                "description": "Creates a group for current user",
                 "consumes": [
                     "application/json"
                 ],
@@ -271,7 +271,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Updates group name by group id",
@@ -333,7 +333,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Deletes group by group id",
@@ -381,103 +381,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/login": {
-            "post": {
-                "description": "Authenticates teacher and returns JWT token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "teacher"
-                ],
-                "summary": "Login teacher",
-                "parameters": [
-                    {
-                        "description": "Login payload",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.LoginResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/register": {
-            "post": {
-                "description": "Creates a new teacher account",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "teacher"
-                ],
-                "summary": "Register teacher",
-                "parameters": [
-                    {
-                        "description": "Register payload",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RegisterRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.RegisterResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/students": {
             "post": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Creates student in a group",
@@ -534,7 +442,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Returns students for group by group id",
@@ -586,7 +494,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Updates student by student id",
@@ -648,7 +556,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Deletes student by student id",
@@ -700,10 +608,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
-                "description": "Returns all tags for current teacher",
+                "description": "Returns all tags for current user",
                 "produces": [
                     "application/json"
                 ],
@@ -715,7 +623,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetTeacherTagsRequest"
+                            "$ref": "#/definitions/dto.GetUserTagsResponse"
                         }
                     },
                     "401": {
@@ -735,10 +643,10 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
-                "description": "Creates tag for current teacher",
+                "description": "Creates tag for current user",
                 "consumes": [
                     "application/json"
                 ],
@@ -792,7 +700,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Updates tag by tag id",
@@ -854,7 +762,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "Bearer": []
+                        "UserID": []
                     }
                 ],
                 "description": "Deletes tag by tag id",
@@ -998,7 +906,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.DeleteTeacherResponse": {
+        "dto.DeleteUserResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -1049,7 +957,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/dto.StudentFeedbackResponse"
                     }
                 },
-                "teacher_id": {
+                "user_id": {
                     "type": "integer"
                 }
             }
@@ -1076,7 +984,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetTeacherTagsRequest": {
+        "dto.GetUserTagsResponse": {
             "type": "object",
             "properties": {
                 "tags": {
@@ -1101,47 +1009,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/dto.StudentDto"
                     }
-                }
-            }
-        },
-        "dto.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "login": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "login": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "teacher_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -1239,7 +1106,7 @@ const docTemplate = `{
         "dto.UpdateTagRequest": {
             "type": "object",
             "properties": {
-                "meaninig": {
+                "meaning": {
                     "type": "string"
                 },
                 "name": {
@@ -1257,10 +1124,10 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "Bearer": {
-            "description": "Введите токен в формате: Bearer \u003cyour_token\u003e",
+        "UserID": {
+            "description": "Передайте ID пользователя из gateway сервиса",
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "X-User-ID",
             "in": "header"
         }
     }
@@ -1269,11 +1136,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "fth.objoraddd.space",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "Feedback Teachers Helper API",
-	Description:      "API для генерации фидбека учителям.",
+	Title:            "Feedback Helper API",
+	Description:      "API для генерации фидбека по ученикам.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

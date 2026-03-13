@@ -4,42 +4,32 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
+	"strconv"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
-	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/utils"
 )
 
 type contextKey string
 
-const TeacherIdKey contextKey = "teacherId"
+const UserIDKey contextKey = "userId"
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
+		userIDHeader := r.Header.Get("X-User-ID")
+		if userIDHeader == "" {
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Authorization header missing"})
+			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "X-User-ID header missing"})
 			return
 		}
 
-		headerParts := strings.Split(authHeader, " ")
-		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+		userID, err := strconv.Atoi(userIDHeader)
+		if err != nil || userID <= 0 {
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid Authorization header format"})
+			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid X-User-ID header format"})
 			return
 		}
 
-		tokenString := headerParts[1]
-
-		teacherId, err := utils.ParseToken(tokenString)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), TeacherIdKey, teacherId)
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 
 		reqWithContext := r.WithContext(ctx)
 
@@ -54,7 +44,7 @@ func EnableCORS(next http.Handler) http.Handler {
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-User-ID, Authorization")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
