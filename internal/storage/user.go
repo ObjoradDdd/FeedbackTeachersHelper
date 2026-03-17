@@ -1,27 +1,28 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 )
 
-func (s *Storage) ensureUserExists(userID int) error {
+func (s *Storage) ensureUserExists(ctx context.Context, userID int) error {
 	query := `INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`
-	_, err := s.db.Exec(query, userID)
+	_, err := s.db.ExecContext(ctx, query, userID)
 	if err != nil {
 		return fmt.Errorf("failed to ensure user exists: %w", err)
 	}
 	return nil
 }
 
-func (s *Storage) DeleteUserById(id int) error {
+func (s *Storage) DeleteUserById(ctx context.Context, id int) error {
 	query := `DELETE FROM users WHERE id = $1`
-	_, err := s.db.Exec(query, id)
+	_, err := s.db.ExecContext(ctx, query, id)
 	return err
 }
 
-func (s *Storage) AddApiKey(userID int, apiKey string) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) AddApiKey(ctx context.Context, userID int, apiKey string) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
@@ -31,29 +32,29 @@ func (s *Storage) AddApiKey(userID int, apiKey string) error {
 		ON CONFLICT (id)
 		DO UPDATE SET api_key = EXCLUDED.api_key
 	`
-	_, err := s.db.Exec(query, userID, apiKey)
+	_, err := s.db.ExecContext(ctx, query, userID, apiKey)
 	return err
 }
 
-func (s *Storage) DeleteApiKey(userID int) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) DeleteApiKey(ctx context.Context, userID int) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
 	query := `UPDATE users SET api_key = NULL WHERE id = $1`
-	_, err := s.db.Exec(query, userID)
+	_, err := s.db.ExecContext(ctx, query, userID)
 	return err
 }
 
-func (s *Storage) GetApiKey(userID int) (string, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) GetApiKey(ctx context.Context, userID int) (string, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return "", err
 	}
 
 	query := `SELECT api_key FROM users WHERE id = $1`
 	var apiKey sql.NullString
 
-	if err := s.db.QueryRow(query, userID).Scan(&apiKey); err != nil {
+	if err := s.db.QueryRowContext(ctx, query, userID).Scan(&apiKey); err != nil {
 		return "", err
 	}
 

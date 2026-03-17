@@ -1,13 +1,14 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-func (s *Storage) CreateGroup(group *models.Group, userID int) (int, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) CreateGroup(ctx context.Context, group *models.Group, userID int) (int, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return 0, err
 	}
 
@@ -23,8 +24,8 @@ func (s *Storage) CreateGroup(group *models.Group, userID int) (int, error) {
 	return groupId, nil
 }
 
-func (s *Storage) GetGroup(id int, userID int) (*models.Group, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) GetGroup(ctx context.Context, id int, userID int) (*models.Group, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
 
@@ -39,8 +40,8 @@ func (s *Storage) GetGroup(id int, userID int) (*models.Group, error) {
 	return &group, nil
 }
 
-func (s *Storage) DeleteGroup(id int, userID int) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) DeleteGroup(ctx context.Context, id int, userID int) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
@@ -53,8 +54,8 @@ func (s *Storage) DeleteGroup(id int, userID int) error {
 	return nil
 }
 
-func (s *Storage) GetUserGroups(userID int) ([]models.Group, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) GetUserGroups(ctx context.Context, userID int) ([]models.Group, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
 
@@ -78,8 +79,8 @@ func (s *Storage) GetUserGroups(userID int) ([]models.Group, error) {
 	return groups, nil
 }
 
-func (s *Storage) UpdateGroup(group *models.Group, userID int) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) UpdateGroup(ctx context.Context, group *models.Group, userID int) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 

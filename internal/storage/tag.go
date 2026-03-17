@@ -1,13 +1,14 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-func (s *Storage) CreateTag(tag *models.Tag, userID int) (int, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) CreateTag(ctx context.Context, tag *models.Tag, userID int) (int, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return 0, err
 	}
 
@@ -16,21 +17,21 @@ func (s *Storage) CreateTag(tag *models.Tag, userID int) (int, error) {
 	`
 	var tagId int
 
-	if err := s.db.QueryRow(query, tag.Name, tag.Meaning, userID).Scan(&tagId); err != nil {
+	if err := s.db.QueryRowContext(ctx, query, tag.Name, tag.Meaning, userID).Scan(&tagId); err != nil {
 		return 0, fmt.Errorf("Error adding tag %s: %w", tag.Name, err)
 	}
 
 	return tagId, nil
 }
 
-func (s *Storage) GetUserTags(userID int) ([]models.Tag, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) GetUserTags(ctx context.Context, userID int) ([]models.Tag, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
 
 	query := `SELECT id, name, meaning FROM tags WHERE user_id = $1`
 
-	rows, err := s.db.Query(query, userID)
+	rows, err := s.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching tags: %w", err)
 	}
@@ -48,28 +49,28 @@ func (s *Storage) GetUserTags(userID int) ([]models.Tag, error) {
 	return tags, nil
 }
 
-func (s *Storage) DeleteTag(id int, userID int) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) DeleteTag(ctx context.Context, id int, userID int) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
 	query := `DELETE FROM tags WHERE id = $1 AND user_id = $2`
 
-	if _, err := s.db.Exec(query, id, userID); err != nil {
+	if _, err := s.db.ExecContext(ctx, query, id, userID); err != nil {
 		return fmt.Errorf("Error deleting tag: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) UpdateTag(tag *models.Tag, userID int) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) UpdateTag(ctx context.Context, tag *models.Tag, userID int) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
 	query := `UPDATE tags SET name = $1, meaning = $2 WHERE id = $3 AND user_id = $4`
 
-	result, err := s.db.Exec(query, tag.Name, tag.Meaning, tag.Id, userID)
+	result, err := s.db.ExecContext(ctx, query, tag.Name, tag.Meaning, tag.Id, userID)
 
 	if err != nil {
 		return fmt.Errorf("Error updating tag: %w", err)
