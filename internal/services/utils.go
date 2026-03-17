@@ -7,11 +7,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"os"
 )
 
-func Encrypt(plainText string) (string, error) {
-	masterKey := os.Getenv("ENCRYPTION_KEY")
+func Encrypt(plainText string, masterKey string) (string, error) {
 	block, err := aes.NewCipher([]byte(masterKey))
 	if err != nil {
 		return "", err
@@ -32,9 +30,8 @@ func Encrypt(plainText string) (string, error) {
 	return base64.StdEncoding.EncodeToString(cipherText), nil
 }
 
-func Decrypt(encryptedBase64 string) (string, error) {
-	masterKey := os.Getenv("ENCRYPTION_KEY")
-	encryptedBytes, err := base64.StdEncoding.DecodeString(encryptedBase64)
+func Decrypt(encrypted string, masterKey string) (string, error) {
+	encryptedBytes, err := base64.StdEncoding.DecodeString(encrypted)
 	if err != nil {
 		return "", err
 	}
