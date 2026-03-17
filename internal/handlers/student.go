@@ -1,21 +1,29 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
-	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
+	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-type StudentHandler struct {
-	StudentService *services.StudentService
+type studentService interface {
+	CreateStudent(ctx context.Context, name string, groupID int, userID int) (int, error)
+	GetGroupStudents(ctx context.Context, groupID int, userID int) ([]models.Student, error)
+	UpdateStudent(ctx context.Context, id int, name string, groupID int, userID int) error
+	DeleteStudent(ctx context.Context, id int, userID int) error
 }
 
-func NewStudentHandler(studentService *services.StudentService) *StudentHandler {
+type StudentHandler struct {
+	studentService studentService
+}
+
+func NewStudentHandler(studentService studentService) *StudentHandler {
 	return &StudentHandler{
-		StudentService: studentService,
+		studentService: studentService,
 	}
 }
 
@@ -45,7 +53,7 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	studentId, err := h.StudentService.CreateStudent(req.Name, req.GroupId, userID)
+	studentId, err := h.studentService.CreateStudent(r.Context(), req.Name, req.GroupId, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -86,7 +94,7 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	students, err := h.StudentService.GetGroupStudents(groupId, userID)
+	students, err := h.studentService.GetGroupStudents(r.Context(), groupId, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -140,7 +148,7 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.StudentService.UpdateStudent(id, req.Name, req.GroupId, userID); err != nil {
+	if err := h.studentService.UpdateStudent(r.Context(), id, req.Name, req.GroupId, userID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
@@ -180,7 +188,7 @@ func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.StudentService.DeleteStudent(id, userID); err != nil {
+	if err := h.studentService.DeleteStudent(r.Context(), id, userID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return

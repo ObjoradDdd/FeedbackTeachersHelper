@@ -1,19 +1,27 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
-	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
+	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-type GroupHandler struct {
-	groupService *services.GroupService
+type groupService interface {
+	CreateGroup(ctx context.Context, name string, userID int) (int, error)
+	GetUserGroups(ctx context.Context, userID int) ([]models.Group, error)
+	UpdateGroup(ctx context.Context, id int, name string, userID int) error
+	DeleteGroup(ctx context.Context, id int, userID int) error
 }
 
-func NewGroupHandler(groupService *services.GroupService) *GroupHandler {
+type GroupHandler struct {
+	groupService groupService
+}
+
+func NewGroupHandler(groupService groupService) *GroupHandler {
 	return &GroupHandler{
 		groupService: groupService,
 	}

@@ -45,7 +45,7 @@ func main() {
 	masterKey := os.Getenv("MASTER_KEY")
 	if masterKey == "" {
 		slog.Error("MASTER_KEY is not set in environment")
-		os.Exit(1)
+		serverErrors <- fmt.Errorf("MASTER_KEY is not set")
 	}
 
 	// Инициализируем хранилище и запускаем сервер

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -10,11 +11,18 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
 )
 
-type TagHandler struct {
-	tagService *services.TagService
+type tagService interface {
+	GetUserTags(ctx context.Context, userID int) ([]models.Tag, error)
+	CreateTag(ctx context.Context, input services.CreateTagInput, userID int) (int, error)
+	DeleteTag(ctx context.Context, id int, userID int) error
+	UpdateTag(ctx context.Context, input services.UpdateTagInput, userID int) error
 }
 
-func NewTagHandler(tagService *services.TagService) *TagHandler {
+type TagHandler struct {
+	tagService tagService
+}
+
+func NewTagHandler(tagService tagService) *TagHandler {
 	return &TagHandler{
 		tagService: tagService,
 	}
@@ -83,7 +91,7 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tagId, err := h.tagService.CreateTag(services.CreateTagInput{
+	tagId, err := h.tagService.CreateTag(r.Context(), services.CreateTagInput{
 		Name:    req.Name,
 		Meaning: req.Meaning,
 	}, userID)
@@ -128,7 +136,7 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.tagService.DeleteTag(id, userID)
+	err = h.tagService.DeleteTag(r.Context(), id, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -176,7 +184,7 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.tagService.UpdateTag(services.UpdateTagInput{
+	err = h.tagService.UpdateTag(r.Context(), services.UpdateTagInput{
 		Id:      id,
 		Name:    req.Name,
 		Meaning: req.Meaning,

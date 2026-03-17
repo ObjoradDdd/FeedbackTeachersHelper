@@ -1,18 +1,24 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
+	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
 )
 
-type FeedbackHandler struct {
-	feedbackService *services.FeedbackService
+type feedbackService interface {
+	GenerateFeedback(ctx context.Context, input *services.GenerateFeedbackInput, userID int) (*models.GeneratedGroupFeedback, error)
 }
 
-func NewFeedbackHandler(feedbackService *services.FeedbackService) *FeedbackHandler {
+type FeedbackHandler struct {
+	feedbackService feedbackService
+}
+
+func NewFeedbackHandler(feedbackService feedbackService) *FeedbackHandler {
 	return &FeedbackHandler{
 		feedbackService: feedbackService,
 	}

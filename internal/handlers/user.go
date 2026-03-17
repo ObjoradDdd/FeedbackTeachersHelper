@@ -1,18 +1,23 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
-	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
 )
 
-type UserHandler struct {
-	userService *services.UserService
+type userService interface {
+	AddApiKey(ctx context.Context, userID int, apiKey string) error
+	DeleteUser(ctx context.Context, userID int) error
 }
 
-func NewUserHandler(userService *services.UserService) *UserHandler {
+type UserHandler struct {
+	userService userService
+}
+
+func NewUserHandler(userService userService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 	}
@@ -44,7 +49,7 @@ func (h *UserHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.AddApiKey(userID, req.APIKey)
+	err = h.userService.AddApiKey(r.Context(), userID, req.APIKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -75,7 +80,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.DeleteUser(userID)
+	err = h.userService.DeleteUser(r.Context(), userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})

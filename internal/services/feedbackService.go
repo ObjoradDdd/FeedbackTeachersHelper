@@ -56,27 +56,27 @@ type GroupFeedback struct {
 	Students          []StudentFeedback
 }
 
-func (s *FeedbackService) GenerateFeedback(ctx context.Context, req *GenerateFeedbackInput, userID int) (models.GeneratedGroupFeedback, error) {
+func (s *FeedbackService) GenerateFeedback(ctx context.Context, req *GenerateFeedbackInput, userID int) (*models.GeneratedGroupFeedback, error) {
 	hash, err := s.storage.GetApiKey(ctx, userID)
 
 	if err != nil {
-		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
+		return &models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
 	}
 
 	apiKey, err := Decrypt(hash, s.masterKey)
 
 	if err != nil {
-		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
+		return &models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
 	}
 
 	groupStudents, err := s.storage.GetGroupStudents(ctx, req.GroupID, userID)
 	if err != nil {
-		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching students: %w", err)
+		return &models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching students: %w", err)
 	}
 
 	userTags, err := s.storage.GetUserTags(ctx, userID)
 	if err != nil {
-		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching tags: %w", err)
+		return &models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching tags: %w", err)
 	}
 
 	studentMap := make(map[int]string)
@@ -100,7 +100,7 @@ func (s *FeedbackService) GenerateFeedback(ctx context.Context, req *GenerateFee
 	for _, studentReq := range req.Students {
 		studentName, exists := studentMap[studentReq.StudentId]
 		if !exists {
-			return models.GeneratedGroupFeedback{}, fmt.Errorf("student with Id %d not found in group %d", studentReq.StudentId, req.GroupID)
+			return &models.GeneratedGroupFeedback{}, fmt.Errorf("student with Id %d not found in group %d", studentReq.StudentId, req.GroupID)
 		}
 
 		var studentTags []models.Tag
@@ -122,15 +122,15 @@ func (s *FeedbackService) GenerateFeedback(ctx context.Context, req *GenerateFee
 
 	feedbackText, err := s.llm.GenerateFeedback(ctx, prompt, apiKey)
 	if err != nil {
-		return models.GeneratedGroupFeedback{}, fmt.Errorf("error generating feedback: %w", err)
+		return &models.GeneratedGroupFeedback{}, fmt.Errorf("error generating feedback: %w", err)
 	}
 
 	groupFeedbackResult, err := mapOutput(feedbackText, internalInput)
 	if err != nil {
-		return models.GeneratedGroupFeedback{}, fmt.Errorf("error mapping LLM output: %w", err)
+		return &models.GeneratedGroupFeedback{}, fmt.Errorf("error mapping LLM output: %w", err)
 	}
 
-	return *groupFeedbackResult, nil
+	return groupFeedbackResult, nil
 }
 
 func generatePrompt(groupInput *GroupFeedback) string {

@@ -16,7 +16,7 @@ type UserEvent struct {
 }
 
 type UserService interface {
-	DeleteUser(id int) error
+	DeleteUser(ctx context.Context, id int) error
 }
 
 type ConsumerManager struct {
@@ -72,7 +72,7 @@ func (c *consumer) startConsumer(ctx context.Context, wg *sync.WaitGroup) {
 
 		var event UserEvent
 		if err := json.Unmarshal(m.Value, &event); err == nil {
-			c.handleEvent(event)
+			c.handleEvent(ctx, event)
 			slog.Info("processed event", "user_id", event.UserID, "action", event.Action)
 		} else {
 			slog.Error("unmarshal error", "err", err)
@@ -84,17 +84,17 @@ func (c *consumer) startConsumer(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
-func (c *consumer) handleEvent(event UserEvent) {
+func (c *consumer) handleEvent(ctx context.Context, event UserEvent) {
 	switch event.Action {
 	case "delete":
-		c.Delete(event.UserID)
+		c.Delete(ctx, event.UserID)
 	default:
 		slog.Warn("unknown action", "action", event.Action)
 	}
 }
 
-func (c *consumer) Delete(userID int) {
-	if err := c.userService.DeleteUser(userID); err != nil {
+func (c *consumer) Delete(ctx context.Context, userID int) {
+	if err := c.userService.DeleteUser(ctx, userID); err != nil {
 		slog.Error("delete failed", "user_id", userID, "err", err)
 	}
 }
