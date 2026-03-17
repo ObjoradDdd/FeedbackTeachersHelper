@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -8,8 +9,8 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 )
 
-func (s *Storage) CreateStudent(student *models.Student, userID int, groupID int) (int, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) CreateStudent(ctx context.Context, student *models.Student, userID int, groupID int) (int, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return 0, err
 	}
 
@@ -23,7 +24,7 @@ func (s *Storage) CreateStudent(student *models.Student, userID int, groupID int
 	`
 	var studentId int
 
-	err := s.db.QueryRow(query, student.Name, groupID, userID).Scan(&studentId)
+	err := s.db.QueryRowContext(ctx, query, student.Name, groupID, userID).Scan(&studentId)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -35,14 +36,14 @@ func (s *Storage) CreateStudent(student *models.Student, userID int, groupID int
 	return studentId, nil
 }
 
-func (s *Storage) GetGroupStudents(groupID int, userID int) ([]models.Student, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) GetGroupStudents(ctx context.Context, groupID int, userID int) ([]models.Student, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
 
 	query := `SELECT id, name FROM students WHERE group_id = $1 AND group_id IN (SELECT id FROM groups WHERE user_id = $2)`
 
-	rows, err := s.db.Query(query, groupID, userID)
+	rows, err := s.db.QueryContext(ctx, query, groupID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching students: %w", err)
 	}
@@ -61,22 +62,22 @@ func (s *Storage) GetGroupStudents(groupID int, userID int) ([]models.Student, e
 	return students, nil
 }
 
-func (s *Storage) DeleteStudent(id int, userID int) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) DeleteStudent(ctx context.Context, id int, userID int) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
 	query := `DELETE FROM students WHERE id = $1 AND group_id IN (SELECT id FROM groups WHERE user_id = $2)`
 
-	if _, err := s.db.Exec(query, id, userID); err != nil {
+	if _, err := s.db.ExecContext(ctx, query, id, userID); err != nil {
 		return fmt.Errorf("Error deleting student: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) UpdateStudent(student *models.Student, userID int, groupID int) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Storage) UpdateStudent(ctx context.Context, student *models.Student, userID int, groupID int) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
@@ -88,7 +89,7 @@ func (s *Storage) UpdateStudent(student *models.Student, userID int, groupID int
 		AND EXISTS (SELECT 1 FROM groups WHERE id = $2 AND user_id = $4)
 	`
 
-	result, err := s.db.Exec(query, student.Name, groupID, student.Id, userID)
+	result, err := s.db.ExecContext(ctx, query, student.Name, groupID, student.Id, userID)
 	if err != nil {
 		return fmt.Errorf("Error updating student: %w", err)
 	}

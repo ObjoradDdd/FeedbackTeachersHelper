@@ -42,6 +42,12 @@ func main() {
 		slog.Warn("no .env file found, using system environment variables")
 	}
 
+	masterKey := os.Getenv("MASTER_KEY")
+	if masterKey == "" {
+		slog.Error("MASTER_KEY is not set in environment")
+		os.Exit(1)
+	}
+
 	// Инициализируем хранилище и запускаем сервер
 	db, err := initStorage()
 	if err != nil {
@@ -52,11 +58,11 @@ func main() {
 
 	// Инициализируем сервисы
 	gemini := llm.NewGeminiClient()
-	userSvc := services.NewUserService(db)
+	userSvc := services.NewUserService(db, masterKey)
 	groupSvc := services.NewGroupService(db)
 	studentSvc := services.NewStudentService(db)
 	tagSvc := services.NewTagService(db)
-	fbSvc := services.NewFeedbackService(db, gemini)
+	fbSvc := services.NewFeedbackService(db, gemini, masterKey)
 
 	// Настраиваем маршруты и запускаем сервер
 	router := setupRouter(userSvc, groupSvc, studentSvc, tagSvc, fbSvc)
@@ -113,7 +119,6 @@ func main() {
 	}
 
 	// Ждем завершения всех горутин (HTTP сервер и Kafka consumer)
-
 	wg.Wait()
 	slog.Info("shutting down server")
 }

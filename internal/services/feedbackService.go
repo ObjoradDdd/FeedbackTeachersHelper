@@ -9,9 +9,9 @@ import (
 )
 
 type FeedbackStorage interface {
-	GetApiKey(userID int) (string, error)
-	GetGroupStudents(groupID int, userID int) ([]models.Student, error)
-	GetUserTags(userID int) ([]models.Tag, error)
+	GetApiKey(ctx context.Context, userID int) (string, error)
+	GetGroupStudents(ctx context.Context, groupID int, userID int) ([]models.Student, error)
+	GetUserTags(ctx context.Context, userID int) ([]models.Tag, error)
 }
 
 type LlmClient interface {
@@ -19,12 +19,13 @@ type LlmClient interface {
 }
 
 type FeedbackService struct {
-	storage FeedbackStorage
-	llm     LlmClient
+	storage   FeedbackStorage
+	llm       LlmClient
+	masterKey string
 }
 
-func NewFeedbackService(storage FeedbackStorage, llm LlmClient) *FeedbackService {
-	return &FeedbackService{storage: storage, llm: llm}
+func NewFeedbackService(storage FeedbackStorage, llm LlmClient, masterKey string) *FeedbackService {
+	return &FeedbackService{storage: storage, llm: llm, masterKey: masterKey}
 }
 
 type StudentFeedbackInput struct {
@@ -56,24 +57,24 @@ type GroupFeedback struct {
 }
 
 func (s *FeedbackService) GenerateFeedback(ctx context.Context, req *GenerateFeedbackInput, userID int) (models.GeneratedGroupFeedback, error) {
-	hash, err := s.storage.GetApiKey(userID)
+	hash, err := s.storage.GetApiKey(ctx, userID)
 
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
 	}
 
-	apiKey, err := Decrypt(hash)
+	apiKey, err := Decrypt(hash, s.masterKey)
 
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching API key: %w", err)
 	}
 
-	groupStudents, err := s.storage.GetGroupStudents(req.GroupID, userID)
+	groupStudents, err := s.storage.GetGroupStudents(ctx, req.GroupID, userID)
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching students: %w", err)
 	}
 
-	userTags, err := s.storage.GetUserTags(userID)
+	userTags, err := s.storage.GetUserTags(ctx, userID)
 	if err != nil {
 		return models.GeneratedGroupFeedback{}, fmt.Errorf("error fetching tags: %w", err)
 	}

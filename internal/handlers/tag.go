@@ -38,7 +38,7 @@ func (h *TagHandler) GetUserTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tags, err := h.tagService.GetUserTags(userID)
+	tags, err := h.tagService.GetUserTags(r.Context(), userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})

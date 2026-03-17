@@ -45,7 +45,7 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupId, err := h.groupService.CreateGroup(req.Name, userID)
+	groupId, err := h.groupService.CreateGroup(r.Context(), req.Name, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -76,7 +76,7 @@ func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups, err := h.groupService.GetUserGroups(userID)
+	groups, err := h.groupService.GetUserGroups(r.Context(), userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -130,7 +130,7 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.groupService.UpdateGroup(id, req.Name, userID)
+	err = h.groupService.UpdateGroup(r.Context(), id, req.Name, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -171,7 +171,7 @@ func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.groupService.DeleteGroup(id, userID)
+	err = h.groupService.DeleteGroup(r.Context(), id, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
