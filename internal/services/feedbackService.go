@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
@@ -212,6 +213,8 @@ func mapOutput(llmOutput string, input *GroupFeedback) (*models.GeneratedGroupFe
 			if strings.EqualFold(strings.TrimSpace(s.Name), name) {
 				studentId = s.StudentId
 				break
+			} else {
+				slog.Error("Error mapping output", "name", s.Name, "id", s.StudentId, "expectedName", name, "feedbackText", feedbackText)
 			}
 		}
 

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
@@ -43,13 +42,13 @@ func NewFeedbackHandler(feedbackService feedbackService, validator *validator.Va
 func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
 
 	var req dto.GetFeedbackRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
@@ -70,11 +69,9 @@ func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 		}(req.Students),
 	}, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to generate feedback")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(feedback.ToDto())
+	respondWithJSON(w, http.StatusOK, feedback.ToDto())
 }

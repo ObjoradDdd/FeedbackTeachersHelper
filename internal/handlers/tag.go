@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -44,20 +43,18 @@ func NewTagHandler(tagService tagService, validator *validator.Validate) *TagHan
 func (h *TagHandler) GetUserTags(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
 
 	tags, err := h.tagService.GetUserTags(r.Context(), userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to get tags")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.GetUserTagsResponse{
+	respondWithJSON(w, http.StatusOK, dto.GetUserTagsResponse{
 		Tags: func(tags []models.Tag) []dto.TagDto {
 			tagsDto := make([]dto.TagDto, len(tags))
 			for i, tag := range tags {
@@ -84,18 +81,13 @@ func (h *TagHandler) GetUserTags(w http.ResponseWriter, r *http.Request) {
 func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
 
 	var req dto.CreateTagRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
-		return
-	}
-
-	if err := h.validator.Struct(req); err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
@@ -105,13 +97,11 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	}, userID)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to create tag")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.CreateTagResponse{
+	respondWithJSON(w, http.StatusOK, dto.CreateTagResponse{
 		Id: tagId,
 	})
 }
@@ -131,7 +121,7 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -139,20 +129,17 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		respondWithError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	err = h.tagService.DeleteTag(r.Context(), id, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to delete tag")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.DeleteTagResponse{
+	respondWithJSON(w, http.StatusOK, dto.DeleteTagResponse{
 		Id: id,
 	})
 }
@@ -174,7 +161,7 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -182,18 +169,12 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		respondWithError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	var req dto.UpdateTagRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
-		return
-	}
-
-	if err := h.validator.Struct(req); err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
@@ -204,13 +185,11 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 	}, userID)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to update tag")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.UpdateTagResponse{
+	respondWithJSON(w, http.StatusOK, dto.UpdateTagResponse{
 		Id: id,
 	})
 }

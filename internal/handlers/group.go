@@ -46,25 +46,19 @@ func NewGroupHandler(groupService groupService, validator *validator.Validate) *
 func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
 
 	var req dto.CreateGroupRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
-		return
-	}
-
-	if err := h.validator.Struct(req); err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
 	groupId, err := h.groupService.CreateGroup(r.Context(), req.Name, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to create group")
 		return
 	}
 
@@ -87,20 +81,18 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
 
 	groups, err := h.groupService.GetUserGroups(r.Context(), userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to get groups")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.GetGroupsResponse{
+	respondWithJSON(w, http.StatusOK, dto.GetGroupsResponse{
 		Groups: func() []dto.GroupDto {
 			result := make([]dto.GroupDto, len(groups))
 			for i, group := range groups {
@@ -128,7 +120,7 @@ func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -136,30 +128,22 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		respondWithError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	var req dto.UpdateGroupRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
-		return
-	}
-
-	if err := h.validator.Struct(req); err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
 	err = h.groupService.UpdateGroup(r.Context(), id, req.Name, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to update group")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.UpdateGroupResponse{
+	respondWithJSON(w, http.StatusOK, dto.UpdateGroupResponse{
 		Message: "Group updated successfully",
 	})
 }
@@ -179,7 +163,7 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -187,20 +171,22 @@ func (h *GroupHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		respondWithError(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+
+	if id < 0 {
+		respondWithError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	err = h.groupService.DeleteGroup(r.Context(), id, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to delete group")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.DeleteGroupResponse{
-		Message: "Group deleted successfully",
+	respondWithJSON(w, http.StatusOK, dto.DeleteGroupResponse{
+		Message: "Group deleted successfully ",
 	})
 }

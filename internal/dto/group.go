@@ -26,10 +26,6 @@ type UpdateGroupResponse struct {
 	Message string `json:"message"`
 }
 
-type DeleteGroupRequest struct {
-	Id int `json:"id" validate:"required,gt=0"`
-}
-
 type DeleteGroupResponse struct {
 	Message string `json:"message"`
 }

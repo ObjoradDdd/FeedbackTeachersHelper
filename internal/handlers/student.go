@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -46,30 +45,23 @@ func NewStudentHandler(studentService studentService, validator *validator.Valid
 func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
 
 	var req dto.CreateStudentRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
-		return
-	}
-
-	if err := h.validator.Struct(req); err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
 	studentId, err := h.studentService.CreateStudent(r.Context(), req.Name, req.GroupId, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to create student")
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(dto.CreateStudentResponse{
+	respondWithJSON(w, http.StatusCreated, dto.CreateStudentResponse{
 		Id: studentId,
 	})
 }
@@ -89,7 +81,7 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -97,20 +89,17 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 	groupIdStr := r.PathValue("groupId")
 	groupId, err := strconv.Atoi(groupIdStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid group ID"})
+		respondWithError(w, http.StatusBadRequest, "Invalid group ID")
 		return
 	}
 
 	students, err := h.studentService.GetGroupStudents(r.Context(), groupId, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to get students")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.GetStudentsGroupResponse{
+	respondWithJSON(w, http.StatusOK, dto.GetStudentsGroupResponse{
 		Students: func() []dto.StudentDto {
 			dtoStudents := make([]dto.StudentDto, len(students))
 			for i, s := range students {
@@ -138,7 +127,7 @@ func (h *StudentHandler) GetStudentsGroup(w http.ResponseWriter, r *http.Request
 func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -146,29 +135,21 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		respondWithError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	var req dto.UpdateStudentRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
-		return
-	}
-
-	if err := h.validator.Struct(req); err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
 	if err := h.studentService.UpdateStudent(r.Context(), id, req.Name, req.GroupId, userID); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to update student")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.UpdateStudentResponse{
+	respondWithJSON(w, http.StatusOK, dto.UpdateStudentResponse{
 		Message: "Student updated successfully",
 	})
 }
@@ -188,7 +169,7 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
@@ -196,19 +177,16 @@ func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Invalid ID"})
+		respondWithError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	if err := h.studentService.DeleteStudent(r.Context(), id, userID); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to delete student")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.DeleteStudentResponse{
+	respondWithJSON(w, http.StatusOK, dto.DeleteStudentResponse{
 		Message: "Student deleted successfully",
 	})
 }

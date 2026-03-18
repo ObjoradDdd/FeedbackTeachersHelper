@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
@@ -42,30 +41,23 @@ func NewUserHandler(userService userService, validator *validator.Validate) *Use
 func (h *UserHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := GetUserID(w, r)
+	userID, err := getUserID(w, r)
 	if err != nil {
 		return
 	}
 
 	var req dto.AddAPIKeyRequest
-	if err := DecodeRequest(w, r, &req); err != nil {
-		return
-	}
-
-	if err := h.validator.Struct(req); err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := decodeAndValidateRequest(w, r, &req, h.validator); err != nil {
 		return
 	}
 
 	err = h.userService.AddApiKey(r.Context(), userID, req.APIKey)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		respondWithError(w, http.StatusInternalServerError, "failed to add api key")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.AddApiKeyResponse{
+	respondWithJSON(w, http.StatusOK, dto.AddApiKeyResponse{
 		Message: "API key added successfully",
 	})
 }
