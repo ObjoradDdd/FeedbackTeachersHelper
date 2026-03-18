@@ -9,6 +9,7 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
+	"github.com/go-playground/validator/v10"
 )
 
 type tagService interface {
@@ -20,11 +21,13 @@ type tagService interface {
 
 type TagHandler struct {
 	tagService tagService
+	validator  *validator.Validate
 }
 
-func NewTagHandler(tagService tagService) *TagHandler {
+func NewTagHandler(tagService tagService, validator *validator.Validate) *TagHandler {
 	return &TagHandler{
 		tagService: tagService,
+		validator:  validator,
 	}
 }
 
@@ -88,6 +91,11 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.CreateTagRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -181,6 +189,11 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.UpdateTagRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

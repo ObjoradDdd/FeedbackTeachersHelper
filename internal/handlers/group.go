@@ -8,6 +8,7 @@ import (
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
+	"github.com/go-playground/validator/v10"
 )
 
 type groupService interface {
@@ -19,11 +20,13 @@ type groupService interface {
 
 type GroupHandler struct {
 	groupService groupService
+	validator    *validator.Validate
 }
 
-func NewGroupHandler(groupService groupService) *GroupHandler {
+func NewGroupHandler(groupService groupService, validator *validator.Validate) *GroupHandler {
 	return &GroupHandler{
 		groupService: groupService,
+		validator:    validator,
 	}
 }
 
@@ -50,6 +53,11 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.CreateGroupRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -135,6 +143,11 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.UpdateGroupRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

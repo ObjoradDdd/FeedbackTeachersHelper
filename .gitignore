@@ -26,3 +26,14 @@
 hs_err_pid*
 replay_pid*
 
+/bin/
+/obj/
+/target/
+/env/
+/.vscode/
+*.exe
+*.dll
+*.so
+*.dylib
+
+

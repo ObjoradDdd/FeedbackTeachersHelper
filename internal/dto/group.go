@@ -11,7 +11,7 @@ type GetGroupsResponse struct {
 }
 
 type CreateGroupRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required,min=2,max=100"`
 }
 
 type CreateGroupResponse struct {
@@ -19,7 +19,7 @@ type CreateGroupResponse struct {
 }
 
 type UpdateGroupRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required,min=2,max=100"`
 }
 
 type UpdateGroupResponse struct {
@@ -27,7 +27,7 @@ type UpdateGroupResponse struct {
 }
 
 type DeleteGroupRequest struct {
-	Id int `json:"id"`
+	Id int `json:"id" validate:"required,gt=0"`
 }
 
 type DeleteGroupResponse struct {

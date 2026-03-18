@@ -11,8 +11,8 @@ type GetUserTagsResponse struct {
 }
 
 type CreateTagRequest struct {
-	Name    string `json:"name"`
-	Meaning string `json:"meaning"`
+	Name    string `json:"name" validate:"required,min=1,max=64"`
+	Meaning string `json:"meaning" validate:"required,min=8,max=512"`
 }
 
 type CreateTagResponse struct {
@@ -20,7 +20,7 @@ type CreateTagResponse struct {
 }
 
 type DeleteTagRequest struct {
-	Id int `json:"id"`
+	Id int `json:"id" validate:"required,gt=0"`
 }
 
 type DeleteTagResponse struct {
@@ -28,8 +28,8 @@ type DeleteTagResponse struct {
 }
 
 type UpdateTagRequest struct {
-	Name    string `json:"name"`
-	Meaning string `json:"meaning"`
+	Name    string `json:"name" validate:"required,min=1,max=64"`
+	Meaning string `json:"meaning" validate:"required,min=8,max=512"`
 }
 
 type UpdateTagResponse struct {

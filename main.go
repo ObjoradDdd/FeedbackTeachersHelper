@@ -18,6 +18,7 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/kafka"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/storage"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 )
 
@@ -132,24 +133,22 @@ func initStorage() (*storage.Storage, error) {
 		return nil, fmt.Errorf("db connection: %w", err)
 	}
 
-	if err := db.InitTables(); err != nil {
-		return nil, fmt.Errorf("migration: %w", err)
-	}
 	return db, nil
 }
 
 func setupRouter(userSvc *services.UserService, groupSvc *services.GroupService, studentSvc *services.StudentService, tagSvc *services.TagService, fbSvc *services.FeedbackService) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	hUser := handlers.NewUserHandler(userSvc)
-	hGroup := handlers.NewGroupHandler(groupSvc)
-	hStudent := handlers.NewStudentHandler(studentSvc)
-	hTag := handlers.NewTagHandler(tagSvc)
-	hFb := handlers.NewFeedbackHandler(fbSvc)
+	validator := validator.New()
 
-	// Роуты остаются прежними
+	hUser := handlers.NewUserHandler(userSvc, validator)
+	hGroup := handlers.NewGroupHandler(groupSvc, validator)
+	hStudent := handlers.NewStudentHandler(studentSvc, validator)
+	hTag := handlers.NewTagHandler(tagSvc, validator)
+	hFb := handlers.NewFeedbackHandler(fbSvc, validator)
+
+	// Роуты
 	mux.HandleFunc("POST /api/add_api_key", handlers.AuthMiddleware(hUser.AddAPIKey))
-	mux.HandleFunc("DELETE /api/delete_user", handlers.AuthMiddleware(hUser.DeleteUser))
 	mux.HandleFunc("POST /api/groups", handlers.AuthMiddleware(hGroup.CreateGroup))
 	mux.HandleFunc("GET /api/groups", handlers.AuthMiddleware(hGroup.GetGroups))
 	mux.HandleFunc("PUT /api/groups/{id}", handlers.AuthMiddleware(hGroup.UpdateGroup))

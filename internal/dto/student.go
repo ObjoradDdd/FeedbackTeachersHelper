@@ -6,8 +6,8 @@ type StudentDto struct {
 }
 
 type CreateStudentRequest struct {
-	Name    string `json:"name"`
-	GroupId int    `json:"group_id"`
+	Name    string `json:"name" validate:"required,min=2,max=100"`
+	GroupId int    `json:"group_id" validate:"required,gt=0"`
 }
 
 type CreateStudentResponse struct {
@@ -15,7 +15,7 @@ type CreateStudentResponse struct {
 }
 
 type GetStudentsGroupRequest struct {
-	Id int `json:"group_id"`
+	Id int `json:"group_id" validate:"required,gt=0"`
 }
 
 type GetStudentsGroupResponse struct {
@@ -23,8 +23,8 @@ type GetStudentsGroupResponse struct {
 }
 
 type UpdateStudentRequest struct {
-	Name    string `json:"name"`
-	GroupId int    `json:"group_id"`
+	Name    string `json:"name" validate:"required,min=2,max=100"`
+	GroupId int    `json:"group_id" validate:"required,gt=0"`
 }
 
 type UpdateStudentResponse struct {
@@ -32,7 +32,7 @@ type UpdateStudentResponse struct {
 }
 
 type DeleteStudentRequest struct {
-	Id int `json:"id"`
+	Id int `json:"id" validate:"required,gt=0"`
 }
 
 type DeleteStudentResponse struct {

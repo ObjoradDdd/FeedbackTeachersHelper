@@ -8,6 +8,7 @@ import (
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
+	"github.com/go-playground/validator/v10"
 )
 
 type studentService interface {
@@ -19,11 +20,13 @@ type studentService interface {
 
 type StudentHandler struct {
 	studentService studentService
+	validator      *validator.Validate
 }
 
-func NewStudentHandler(studentService studentService) *StudentHandler {
+func NewStudentHandler(studentService studentService, validator *validator.Validate) *StudentHandler {
 	return &StudentHandler{
 		studentService: studentService,
+		validator:      validator,
 	}
 }
 
@@ -50,6 +53,11 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.CreateStudentRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -145,6 +153,11 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.UpdateStudentRequest
 	if err := DecodeRequest(w, r, &req); err != nil {
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/models"
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/services"
+	"github.com/go-playground/validator/v10"
 )
 
 type feedbackService interface {
@@ -16,11 +17,13 @@ type feedbackService interface {
 
 type FeedbackHandler struct {
 	feedbackService feedbackService
+	validator       *validator.Validate
 }
 
-func NewFeedbackHandler(feedbackService feedbackService) *FeedbackHandler {
+func NewFeedbackHandler(feedbackService feedbackService, validator *validator.Validate) *FeedbackHandler {
 	return &FeedbackHandler{
 		feedbackService: feedbackService,
+		validator:       validator,
 	}
 }
 

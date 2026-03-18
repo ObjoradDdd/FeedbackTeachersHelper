@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ObjoradDdd/FeedbackTeachersHelper/internal/dto"
+	"github.com/go-playground/validator/v10"
 )
 
 type userService interface {
@@ -15,11 +16,13 @@ type userService interface {
 
 type UserHandler struct {
 	userService userService
+	validator   *validator.Validate
 }
 
-func NewUserHandler(userService userService) *UserHandler {
+func NewUserHandler(userService userService, validator *validator.Validate) *UserHandler {
 	return &UserHandler{
 		userService: userService,
+		validator:   validator,
 	}
 }
 
@@ -49,6 +52,11 @@ func (h *UserHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.validator.Struct(req); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	err = h.userService.AddApiKey(r.Context(), userID, req.APIKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -59,36 +67,5 @@ func (h *UserHandler) AddAPIKey(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dto.AddApiKeyResponse{
 		Message: "API key added successfully",
-	})
-}
-
-// DeleteUser godoc
-// @Summary Delete user
-// @Description Deletes current user account
-// @Tags users
-// @Produce json
-// @Security UserID
-// @Success 200 {object} dto.DeleteUserResponse
-// @Failure 401 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /delete_user [delete]
-func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	userID, err := GetUserID(w, r)
-	if err != nil {
-		return
-	}
-
-	err = h.userService.DeleteUser(r.Context(), userID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.DeleteUserResponse{
-		Message: "User deleted successfully",
 	})
 }
