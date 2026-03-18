@@ -3,17 +3,13 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strings"
 	"sync"
 
 	"github.com/segmentio/kafka-go"
 )
-
-type UserEvent struct {
-	UserID int    `json:"user_id"`
-	Action string `json:"action"`
-}
 
 type UserService interface {
 	DeleteUser(ctx context.Context, id int) error
@@ -47,32 +43,53 @@ func NewConsumerManager(brokers string, userService UserService, group string, t
 	}
 }
 
-func (c *ConsumerManager) Start(ctx context.Context) {
+func (c *ConsumerManager) Start(ctx context.Context) error {
 	wg := &sync.WaitGroup{}
-	for _, consumer := range c.consumers {
+	errChan := make(chan error, c.consumersCount)
+	internalCtx, stopAllConsumers := context.WithCancel(ctx)
+	defer stopAllConsumers()
+
+	for _, cons := range c.consumers {
 		wg.Add(1)
-		go consumer.startConsumer(ctx, wg)
+		go func(c consumer) {
+			defer wg.Done()
+			if err := c.startConsumer(internalCtx); err != nil {
+				errChan <- err
+			}
+		}(cons)
 	}
-	wg.Wait()
+
+	select {
+	case err := <-errChan:
+		stopAllConsumers()
+		wg.Wait()
+		return err
+	case <-ctx.Done():
+		stopAllConsumers()
+		wg.Wait()
+		return nil
+	}
 }
 
-func (c *consumer) startConsumer(ctx context.Context, wg *sync.WaitGroup) {
+func (c *consumer) startConsumer(ctx context.Context) error {
 	defer c.reader.Close()
-	defer wg.Done()
 
 	for {
 		m, err := c.reader.FetchMessage(ctx)
 		if err != nil {
 			if ctx.Err() != nil {
-				break
+				return nil
 			}
 			slog.Error("fetch error", "err", err)
-			continue
+			return fmt.Errorf("kafka fetch error: %w", err)
 		}
 
 		var event UserEvent
 		if err := json.Unmarshal(m.Value, &event); err == nil {
-			c.handleEvent(ctx, event)
+			if err := c.handleEvent(ctx, event); err != nil {
+				slog.Error("handle event error", "err", err)
+				return fmt.Errorf("handle event error: %w", err)
+			}
 			slog.Info("processed event", "user_id", event.UserID, "action", event.Action)
 		} else {
 			slog.Error("unmarshal error", "err", err)
@@ -80,21 +97,20 @@ func (c *consumer) startConsumer(ctx context.Context, wg *sync.WaitGroup) {
 
 		if err := c.reader.CommitMessages(ctx, m); err != nil {
 			slog.Error("commit error", "err", err)
+			return fmt.Errorf("kafka commit error: %w", err)
 		}
 	}
 }
 
-func (c *consumer) handleEvent(ctx context.Context, event UserEvent) {
+func (c *consumer) handleEvent(ctx context.Context, event UserEvent) error {
 	switch event.Action {
 	case "delete":
-		c.Delete(ctx, event.UserID)
+		if err := c.Delete(ctx, event.UserID); err != nil {
+			return err
+		}
+
 	default:
 		slog.Warn("unknown action", "action", event.Action)
 	}
-}
-
-func (c *consumer) Delete(ctx context.Context, userID int) {
-	if err := c.userService.DeleteUser(ctx, userID); err != nil {
-		slog.Error("delete failed", "user_id", userID, "err", err)
-	}
+	return nil
 }

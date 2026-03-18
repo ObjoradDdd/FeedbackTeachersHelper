@@ -36,7 +36,7 @@ func main() {
 	slog.SetDefault(logger)
 
 	//  Канал для перехвата критических ошибок сервера
-	serverErrors := make(chan error, 1)
+	serverErrors := make(chan error, 2)
 
 	// Загружаем переменные окружения из .env файла
 	if err := godotenv.Load(); err != nil {
@@ -46,14 +46,14 @@ func main() {
 	masterKey := os.Getenv("MASTER_KEY")
 	if masterKey == "" {
 		slog.Error("MASTER_KEY is not set in environment")
-		serverErrors <- fmt.Errorf("MASTER_KEY is not set")
+		return
 	}
 
 	// Инициализируем хранилище и запускаем сервер
 	db, err := initStorage()
 	if err != nil {
 		slog.Error("failed to initialize storage", "error", err)
-		serverErrors <- err
+		return
 	}
 	defer db.Close()
 
@@ -65,17 +65,17 @@ func main() {
 	tagSvc := services.NewTagService(db)
 	fbSvc := services.NewFeedbackService(db, gemini, masterKey)
 
-	// Настраиваем маршруты и запускаем сервер
-	router := setupRouter(userSvc, groupSvc, studentSvc, tagSvc, fbSvc)
-
 	// Запускаем Kafka consumer в отдельной горутине
 	consumersCount, err := strconv.Atoi(os.Getenv("CONSUMERS_COUNT"))
 	if err != nil {
 		slog.Error("failed to parse consumers count", "error", err)
-		serverErrors <- err
+		return
 	} else {
-		startKafka(userSvc, ctx, wg, consumersCount)
+		startKafka(ctx, userSvc, wg, consumersCount, serverErrors)
 	}
+
+	// Настраиваем маршруты
+	router := setupRouter(userSvc, groupSvc, studentSvc, tagSvc, fbSvc)
 
 	// Запускаем HTTP сервер
 	var srv *http.Server
@@ -83,7 +83,7 @@ func main() {
 	port, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
 	if err != nil {
 		slog.Warn("invalid SERVER_PORT", "error", err)
-		serverErrors <- err
+		return
 	} else {
 		srv = &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
@@ -103,6 +103,7 @@ func main() {
 	case err := <-serverErrors:
 		if err != http.ErrServerClosed {
 			slog.Error("server failed prematurely", "error", err)
+			stop()
 		}
 	case <-ctx.Done():
 		slog.Info("shutdown signal received")
@@ -166,8 +167,8 @@ func setupRouter(userSvc *services.UserService, groupSvc *services.GroupService,
 	return mux
 }
 
-func startKafka(userSvc *services.UserService, ctx context.Context, wg *sync.WaitGroup, consumersCount int) {
-	consumer := kafka.NewConsumerManager(
+func startKafka(ctx context.Context, userSvc *services.UserService, wg *sync.WaitGroup, consumersCount int, serverErrors chan<- error) {
+	manager := kafka.NewConsumerManager(
 		os.Getenv("KAFKA_BROKERS"),
 		userSvc,
 		"fth_group",
@@ -177,6 +178,9 @@ func startKafka(userSvc *services.UserService, ctx context.Context, wg *sync.Wai
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		consumer.Start(ctx)
+		if err := manager.Start(ctx); err != nil {
+			slog.Error("Kafka manager stopped with error", "error", err)
+			serverErrors <- err
+		}
 	}()
 }
